@@ -1,0 +1,246 @@
+To help with further development, here are the results I get for the various "get"-calls:
+--------------------------------------------------------------------------------
+
+
+
+
+/*---------------------------------------------------------------------------*/
+func
+{
+  msg: 'FUNC_VIEW_INFO',
+  cmd: 'notibyget',
+  data: {
+    i_curr_func: 20,
+    b_connect: true,
+    ai_func_list: [ 0, 1, 15, 6 ],
+    s_spk_bt_name: 'LG_Speaker_SP8YA'
+  },
+  result: 'ok'
+}
+/*---------------------------------------------------------------------------*/
+info
+{
+  msg: 'SETTING_VIEW_INFO',
+  cmd: 'notibyget',
+  data: {
+    b_support_avsmrm: true,
+    b_neuralx: false,
+    i_av_sync: 0,
+    b_night_time: false,
+    i_woofer_min: -15,
+    b_nighttime_enable: true,
+    b_drc: false,
+    s_user_name: 'LG_Speaker_SP8YA',
+    b_auto_vol: false,
+    s_ipv6_addr: 'fda2:84f3:a02a:0:e1db:77a1:64f0:21e',
+    b_auto_power: true,
+    b_tv_remote: true,
+    b_rear: false,
+    b_support_diag: true,
+    b_wow_connect: false,
+    i_center_level: 6,
+    b_enable_dialog: false,
+    i_rear_max: 6,
+    b_set_device_name: false,
+    i_woofer_max: 6,
+    b_avsmrm_status: false,
+    b_soundbarmode: false,
+    i_dialog_min: 0,
+    i_woofer_level: 15,
+    i_rear_level: 6,
+    i_top_min: -6,
+    i_rear_min: -6,
+    i_top_level: 6,
+    i_top_max: 6,
+    i_dialog_level: 0,
+    i_center_min: -6,
+    i_center_max: 6,
+    i_dialog_max: 6,
+    i_calibration_status: 0,
+    i_curr_eq: 0,
+    s_ipv4_addr: '192.168.1.135'
+  },
+  result: 'ok'
+}
+/*---------------------------------------------------------------------------*/
+play
+{
+  msg: 'PLAY_INFO',
+  cmd: 'notibyget',
+  data: {
+    i_duration: 0,
+    b_support_play_ctrl: true,
+    i_play_ctrl: 0,
+    i_position: 0,
+    i_stream_type: 0
+  },
+  result: 'ok'
+}
+/*---------------------------------------------------------------------------*/
+settings
+{
+  msg: 'SETTING_VIEW_INFO',
+  cmd: 'notibyget',
+  data: {
+    b_support_avsmrm: true,
+    b_neuralx: false,
+    i_av_sync: 0,
+    b_night_time: false,
+    i_woofer_min: -15,
+    b_nighttime_enable: true,
+    b_drc: false,
+    s_user_name: 'LG_Speaker_SP8YA',
+    b_auto_vol: false,
+    s_ipv6_addr: 'fda2:84f3:a02a:0:91dd:77a1:64f0:71a',
+    b_auto_power: true,
+    b_tv_remote: true,
+    b_rear: false,
+    b_support_diag: true,
+    b_wow_connect: false,
+    i_center_level: 6,
+    b_enable_dialog: false,
+    i_rear_max: 6,
+    b_set_device_name: false,
+    i_woofer_max: 6,
+    b_avsmrm_status: false,
+    b_soundbarmode: false,
+    i_dialog_min: 0,
+    i_woofer_level: 15,
+    i_rear_level: 6,
+    i_top_min: -6,
+    i_rear_min: -6,
+    i_top_level: 6,
+    i_top_max: 6,
+    i_dialog_level: 0,
+    i_center_min: -6,
+    i_center_max: 6,
+    i_dialog_max: 6,
+    i_calibration_status: 0,
+    i_curr_eq: 0,
+    s_ipv4_addr: '192.168.1.135'
+  },
+  result: 'ok'
+}
+/*---------------------------------------------------------------------------*/
+product
+{
+  msg: 'PRODUCT_INFO',
+  cmd: 'notibyget',
+  data: {
+    i_model_type: 0,
+    i_network_type: 1,
+    i_model_no: 0,
+    s_model_name: 'SP8YA'
+  },
+  result: 'ok'
+}
+/*---------------------------------------------------------------------------*/
+c4a_info
+{
+  msg: 'C4A_SETTING_INFO',
+  cmd: 'notibyget',
+  data: { i_agree: 0 },
+  result: 'ok'
+}
+/*---------------------------------------------------------------------------*/
+ap
+{ msg: 'SHARE_AP_INFO', cmd: 'notibyget', result: 'sorry not support' }
+/*---------------------------------------------------------------------------*/
+eq
+{
+  msg: 'EQ_VIEW_INFO',
+  cmd: 'notibyget',
+  data: {
+    i_curr_eq: 0,
+    i_bass: 5,
+    i_treble: 5,
+    ai_eq_list: [
+      19,  0,  6, 7, 20,
+      21, 22, 14, 5, 15,
+      23
+    ],
+    merdian_eq_list: [ 6 ]
+  },
+  result: 'ok'
+}
+/*---------------------------------------------------------------------------*/
+update
+{
+  msg: 'UPDATE_VIEW_INFO',
+  cmd: 'notibyget',
+  data: {
+    o_system_ver: { s_main: '2111240', s_c4a: '1.52.246654', s_micom: '2109071' },
+    b_update: false,
+    i_progress: 0,
+    s_region: 'do',
+    o_server_ver: {}
+  },
+  result: 'ok'
+}
+/*---------------------------------------------------------------------------*/
+build
+{
+  msg: 'BUILD_INFO_DEV',
+  cmd: 'notibyget',
+  data: {
+    s_c4a: '1.52.246654',
+    s_platform: 'MT8506',
+    s_micom: '2109071',
+    s_woofer_rx: '2010060',
+    s_time: '2019. 04. 30. (화) 13:52:06 KST',
+    s_package: 'sk6',
+    i_package_ver: 44944,
+    s_lgrev: '1571',
+    s_lgcode: 'branches/advance_dev',
+    s_rear_tx: '2140020',
+    s_main: '2111240',
+    s_dsp: '',
+    s_meq: '210125D0',
+    s_peq: '2011110',
+    s_hdmi: '',
+    s_woofer_tx: '2100020',
+    s_touch: '2001070',
+    s_rear_rx: '0000000',
+    s_demo: '',
+    i_beta: 0
+  },
+  result: 'ok'
+}
+/*---------------------------------------------------------------------------*/
+option
+{
+  msg: 'OPTION_INFO_DEV',
+  cmd: 'notibyget',
+  data: {
+    s_option: '00 54 06 33 42 00 00 53 45 65 6E  53 50 38 59 41 00 00 00',
+    i_length: 19
+  }
+}
+
+(s_option as hex = T 3B SEenSP8YA)
+/*---------------------------------------------------------------------------*/
+mac
+{
+  msg: 'MAC_INFO_DEV',
+  cmd: 'notibyget',
+  data: {
+    s_wired_mac: 'do@',
+    s_wireless_mac: 'd"MAC_INFO_DEV"}',
+    s_bt_mac: '00:00:00:00:00:00',
+    s_uuid: '<I removed this>'
+  },
+  result: 'ok'
+}
+
+(I censored my uuid)
+/*---------------------------------------------------------------------------*/
+mem_mon
+(no answer, timed out)
+/*---------------------------------------------------------------------------*/
+test_dev
+(no answer, timed out)
+/*---------------------------------------------------------------------------*/
+
+
+
+
