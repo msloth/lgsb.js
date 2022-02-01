@@ -1,22 +1,33 @@
 /*---------------------------------------------------------------------------*/
 // This is a library for interfacing LG Soundbars.
 // 
-// This library will automatically set up a connection to the speaker, maintain
-// it as long as there are outstanding queries, and automatically close connection
-// when done.
+// This library will automatically handle the connection to the speaker,
+// automatically maintain/close/reconnect as needed.
 /*---------------------------------------------------------------------------*/
 // TODO:
 // 
-// * harden up the data receive with sanity checks that valid packet was received
-// * better match up request->answer->callback
-// * test what happens if not on network
+// * examples
+// * handle all tcp events, including errors
 // * autodiscovery if IP isn't known (does not answer SSDP it seems)
-// * verify night mode
-// * clean up logging
+// * test what happens if soundbar is not on network
+// * equalizers
+// * handle cipher errors, has happened after a call is done
+// * handle race condition when two calls are made, yet the first is not yet
+//   connected, two system calls for socket is made -> crash
+//    -> change flag to eg "connected_or_connecting"
+//    
+// * harden up the data receive with sanity checks that valid packet was received
+//    --sometimes cryptolib complains, perhaps too large incoming so divided into
+//      >1 packet -> fragmented incoming
+// * better match up request->answer->callback
+// * perhaps divide up, no queue but instead one full TCP up-send-down per command
+//    --values aren't updated until TCP reconnected it seems.
+//      a set-get (ie write, then immediately read) of a value, will read the
+//      value as it was _before_ the write, not what was written.
 /*---------------------------------------------------------------------------*/
 // This library is built upon https://github.com/google/python-temescal which
 // is Google-hosted, but is not in any way affiliated, associated, or endorsed
-// by Google.
+// by Google. Temescal documented the packet format and encryption key+iv.  
 // 
 // For https://github.com/google/python-temescal :
 // 
@@ -36,11 +47,84 @@
 /*---------------------------------------------------------------------------*/
 const net = require('net');
 const crypto = require("crypto");
+
+const log = require('loglevel');
+log.setLevel("trace"); // silent, error, warn, info, debug, trace
+// log.setLevel("silent"); // silent, error, warn, info, debug, trace
 /*---------------------------------------------------------------------------*/
 // cipher
 const ciphertype = 'aes-256-cbc';
 const iv = "'%^Ur7gy$~t+f)%@";
 const key = "T^&*J%^7tr~4^%^&I(o%^!jIJ__+a0 k";
+/*---------------------------------------------------------------------------*/
+// const equalizers = ["Standard", "Bass", "Flat", "Boost", "Treble and Bass", "User",
+//               "Music", "Cinema", "Night", "News", "Voice", "ia_sound",
+//               "Adaptive Sound Control", "Movie", "Bass Blast", "Dolby Atmos",
+//               "DTS Virtual X", "Bass Boost Plus", "DTS X"];
+
+// STANDARD = 0
+// BASS = 1
+// FLAT = 2
+// BOOST = 3
+// TREBLE_BASS = 4
+// USER_EQ = 5
+// MUSIC = 6
+// CINEMA = 7
+// NIGHT = 8
+// NEWS = 9
+// VOICE = 10
+// IA_SOUND = 11
+// ASC = 12
+// MOVIE = 13
+// BASS_BLAST = 14
+// DOLBY_ATMOS = 15
+// DTS_VIRTUAL_X = 16
+// BASS_BOOST_PLUS = 17
+// DTS_X = 18
+
+const inputs = ["Wifi",
+                "Bluetooth",
+                "Portable",
+                "Aux",
+                "Optical",
+                "CP",
+                "HDMI",
+                "ARC",
+                "Spotify",
+                "Optical2",
+                "HDMI2",
+                "HDMI3",
+                "LG TV",
+                "Mic",
+                "Chromecast",
+                "Optical/HDMI ARC",
+                "LG Optical",
+                "FM",
+                "USB",
+                "USB2",
+                "E-ARC"];
+
+// WIFI = 0
+// BLUETOOTH = 1
+// PORTABLE = 2
+// AUX = 3
+// OPTICAL = 4
+// CP = 5
+// HDMI = 6
+// ARC = 7
+// SPOTIFY = 8
+// OPTICAL_2 = 9
+// HDMI_2 = 10
+// HDMI_3 = 11
+// LG_TV = 12
+// MIC = 13
+// C4A = 14
+// OPTICAL_HDMIARC = 15
+// LG_OPTICAL = 16
+// FM = 17
+// USB = 18
+// USB_2 = 19
+// E_ARC = 20
 /*---------------------------------------------------------------------------*/
 // "hack" to get the function name, which simplifies logging statements.
 function functionname() {
@@ -93,19 +177,19 @@ let _create_packet = function(data) {
 let _send_to_device = function() {
   // sanity check: are we even needed?
   if (this.sendqueue.length === 0) {
-    console.log(`send, but queue at 0 so returning; letting live auto for a few seconds`);
+    log.log(`send, but queue at 0 so returning; letting live auto for a few seconds`);
     return;
   }
 
   // sanity check: are we currently waiting for an connect/answer?
   if (this.current_send) {
-    console.log(`send, but already current, ie waiting for answer`);
+    log.log(`send, but already current, ie waiting for answer`);
     return;
   }
 
-  console.log(`Sending... Queue at ${this.sendqueue.length}`);
+  log.log(`Sending... Queue at ${this.sendqueue.length}`);
   if (!this.is_connected) {
-    console.log(`...but not connected yet.`);
+    log.warn(`Send, but not connected yet.`);
     this._connect_to_device();
 
   } else {
@@ -116,7 +200,7 @@ let _send_to_device = function() {
     }
 
     // send over network
-    console.log(this.current_send.command);
+    log.log(this.current_send.command);
     let payload = this._create_packet(this.current_send.command);
     this.tcpclient.write(payload);
 
@@ -134,7 +218,7 @@ let _send_to_device = function() {
 /*---------------------------------------------------------------------------*/
 // Terminate the TCP connection, mostly from a timer if the connection is idle
 let _disconnect = function() {
-  console.log(`Closing connection`);
+  log.log(`Closing connection`);
 
   // stop timer if running
   if (this.auto_disconnect_timer) {
@@ -147,16 +231,16 @@ let _disconnect = function() {
 /*---------------------------------------------------------------------------*/
 let _connect_to_device = function() {
   if (this.is_connected) {
-    console.log(`Connect, but already connected`);
+    log.log(`Connect, but already connected`);
     return;
   }
 
-  console.log(`Connecting... Queue at ${this.sendqueue.length}`);
+  log.log(`Connecting... Queue at ${this.sendqueue.length}`);
   this.tcpclient.connect(this.tcpport, this.ipaddr, _tcp_opened.bind(this));
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_opened = function() {
-  console.log(`TCP Connected... Queue at ${this.sendqueue.length}`);
+  log.log(`TCP Connected... Queue at ${this.sendqueue.length}`);
   this.is_connected = true;
   this.auto_disconnect_timer = 
       setTimeout(this._disconnect.bind(this), this.auto_disconnect_timeout);
@@ -169,14 +253,14 @@ let _tcp_opened = function() {
 // Note: needs hardening
 let _tcp_data = function(data) {
   if (data[0] != 0x10) {
-    console.log(`warning: header magic not ok`);
+    log.warn(`warning: header magic not ok`);
   }
 
   let rxed = _decrypt(data.slice(5));
   let ans = JSON.parse(rxed);
 
   if (this.current_send) {
-    console.log(`current send exists`);
+    log.log(`current send exists`);
     this.current_send.callback(ans);
 
     // clear it, so we know to pick the next queue if such
@@ -184,11 +268,19 @@ let _tcp_data = function(data) {
   }
 
   // start/keep sending
-  this._send_to_device();
+  // XXX Here, we can either keep on sending OR disconnect and let the "closed"-
+  // handler reconnect (if more in queue).
+  // Keep on -  lower latency
+  //            probably more threadsafe
+  //            "Get"s aren't necessarily accurate (if written during same conn)
+  // Disconnect - reconnect timer adds latency
+  //              "Get"s are always accurate
+  this._send_to_device(); // keep on
+  // this._disconnect(); // disconnect
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_closed = function() {
-  console.log('TCP Connection closed');
+  log.log('TCP Connection closed');
   this.is_connected = false;
 
   // stop timer if running; if anything restarts the connection, the timer will
@@ -200,7 +292,7 @@ let _tcp_closed = function() {
 
   // if we should reconnect, set that up
   if (this.sendqueue.length > 0) {
-    console.log(`TCP closed but queue > 0, setting reconnect timer`);
+    log.warn(`TCP closed but queue > 0, setting reconnect timer`);
     this.reconnect_timer = setTimeout(this._connect_to_device, 1000);
   }
 }
@@ -219,7 +311,7 @@ let _tcp_closed = function() {
 
 /*---------------------------------------------------------------------------*/
 let _getter = function(getwhat, callback, logname) {
-  console.log(`${logname}`);
+  log.log(`${logname}`);
   this.sendqueue.push({
     command: {"cmd": "get", "msg": getwhat},
     callback: callback});
@@ -294,7 +386,7 @@ let get_test_info = function(callback) {
 
 /*---------------------------------------------------------------------------*/
 let _setter_view_info = function(setwhat, callback, logname) {
-  console.log(`${logname}`);
+  log.log(`${logname}`);
   this.sendqueue.push({
     command: {"cmd": "set", "data": setwhat, "msg": "SETTING_VIEW_INFO"},
     callback: callback});
@@ -303,7 +395,7 @@ let _setter_view_info = function(setwhat, callback, logname) {
 }
 /*---------------------------------------------------------------------------*/
 let _setter = function(category, setwhat, callback, logname) {
-  console.log(`${logname}`);
+  log.log(`${logname}`);
   this.sendqueue.push({
     command: {"cmd": "set", "data": setwhat, "msg": category},
     callback: callback});
@@ -312,11 +404,7 @@ let _setter = function(category, setwhat, callback, logname) {
 }
 /*---------------------------------------------------------------------------*/
 let set_night_mode = function(enable, callback) {
-// XXXXX this one is wrong, should be either
-//   // b_night_time
-  // b_nighttime_enable
-
-  this._setter_view_info({"b_night_mode": enable}, callback, functionname());
+  this._setter_view_info({"b_night_time": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_avc = function(enable, callback) {
@@ -387,7 +475,7 @@ let set_eq = function(eq, callback) {
   this._setter("EQ_VIEW_INFO" ,{"i_curr_eq": eq}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
-let set_func = function(value, callback) {
+let set_input = function(value, callback) {
   this._setter("FUNC_VIEW_INFO" ,{"i_curr_func": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
@@ -400,7 +488,7 @@ let set_mute = function(enable, callback) {
 }
 /*---------------------------------------------------------------------------*/
 let factory_reset = function(callback) {
-  console.log(`Factory reset requested`);
+  log.log(`Factory reset requested`);
   this.sendqueue.push({
     command: {"cmd": "set", "msg": "FACTORY_SET_REQ"},
     callback: callback});
@@ -409,7 +497,7 @@ let factory_reset = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
 let test_tone = function(callback) {
-  console.log(`Test tone requested`);
+  log.log(`Test tone requested`);
   this.sendqueue.push({
     command: {"cmd": "set", "msg": "TEST_TONE_REQ"},
     callback: callback});
@@ -418,10 +506,10 @@ let test_tone = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
 class lg_soundbar {
-  constructor() {
+  constructor(ip) {
     // -------------------------------
     // connection
-    this.ipaddr = "192.168.1.135";
+    this.ipaddr = ip;
     this.tcpport = 9741;
     this.is_connected = false;
     this.sendqueue = [];
@@ -496,7 +584,7 @@ lg_soundbar.prototype.set_bt_standby = set_bt_standby;
 lg_soundbar.prototype.set_bt_restrict = set_bt_restrict;
 lg_soundbar.prototype.set_sleep_time = set_sleep_time;
 lg_soundbar.prototype.set_eq = set_eq;
-lg_soundbar.prototype.set_func = set_func;
+lg_soundbar.prototype.set_input = set_input;
 lg_soundbar.prototype.factory_reset = factory_reset;
 lg_soundbar.prototype.test_tone = test_tone;
 /*---------------------------------------------------------------------------*/
@@ -518,54 +606,39 @@ let get_mute = function(callback) {
 /*---------------------------------------------------------------------------*/
 let get_nightmode = function(callback) {
   this.get_info((result) => {
-    // one of these, but which?:
-    // b_night_time
-    // b_nighttime_enable
     callback(result.data.b_night_time);
   });
 }
 /*---------------------------------------------------------------------------*/
+let get_name = function(callback) {
+  this.get_info((result) => {
+    callback(result.data.s_user_name);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_product = function(callback) {
+  this.get_product_info((result) => {
+    callback(result.data.s_model_name);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_input = function(callback) {
+  this.get_func((result) => {
+    let ans = "Unknown";
+    let funcnum = result.data.i_curr_func;
+    if (funcnum < inputs.length) {
+      ans = inputs[funcnum];
+    }
+    callback(ans);
+  });
+}
+/*---------------------------------------------------------------------------*/
 // wrappers and new
+lg_soundbar.prototype.get_name = get_name;
+lg_soundbar.prototype.get_product = get_product;
+lg_soundbar.prototype.get_input = get_input;
 lg_soundbar.prototype.get_speakerinfo = get_speakerinfo;
 lg_soundbar.prototype.get_volume = get_volume;
 lg_soundbar.prototype.get_mute = get_mute;
 lg_soundbar.prototype.get_nightmode = get_nightmode;
-/*---------------------------------------------------------------------------*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*---------------------------------------------------------------------------*/
-let lgsb = new lg_soundbar();
-/*---------------------------------------------------------------------------*/
-/*---------------------------------------------------------------------------*/
-/*---------------------------------------------------------------------------*/
-lgsb.get_nightmode((res) => {
-  console.log(`get aaaa`);
-  console.log(res);
-
-  // lgsb.get_eq((res) => {
-  //   console.log(`got eq`);
-  //   console.log(res);
-  //   lgsb.get_info((res) => {
-  //     console.log(`got info`);
-  //     console.log(res);
-  //     lgsb.get_func((res) => {
-  //       console.log(`got func`);
-  //       console.log(res);
-  //     });
-  //   });
-  // });
-});
 /*---------------------------------------------------------------------------*/
