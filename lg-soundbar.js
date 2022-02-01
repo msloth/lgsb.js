@@ -6,16 +6,17 @@
 /*---------------------------------------------------------------------------*/
 // TODO:
 // 
+// * examples
+// * input get/set wrappers
+// * handle all tcp events, including errors
+// * autodiscovery if IP isn't known (does not answer SSDP it seems)
+// * test what happens if soundbar is not on network
+// * equalizers
+// 
 // * harden up the data receive with sanity checks that valid packet was received
 //    --sometimes cryptolib complains, perhaps too large incoming so divided into
 //      >1 packet -> fragmented incoming
 // * better match up request->answer->callback
-// * handle all tcp events, including errors
-// * test what happens if soundbar is not on network
-// * autodiscovery if IP isn't known (does not answer SSDP it seems)
-// * tests
-// * examples
-// * better docs
 // * perhaps divide up, no queue but instead one full TCP up-send-down per command
 //    --values aren't updated until TCP reconnected it seems.
 //      a set-get (ie write, then immediately read) of a value, will read the
@@ -116,7 +117,7 @@ let _send_to_device = function() {
 
   log.log(`Sending... Queue at ${this.sendqueue.length}`);
   if (!this.is_connected) {
-    log.log(`...but not connected yet.`);
+    log.warn(`Send, but not connected yet.`);
     this._connect_to_device();
 
   } else {
@@ -180,7 +181,7 @@ let _tcp_opened = function() {
 // Note: needs hardening
 let _tcp_data = function(data) {
   if (data[0] != 0x10) {
-    log.log(`warning: header magic not ok`);
+    log.warn(`warning: header magic not ok`);
   }
 
   let rxed = _decrypt(data.slice(5));
@@ -219,7 +220,7 @@ let _tcp_closed = function() {
 
   // if we should reconnect, set that up
   if (this.sendqueue.length > 0) {
-    log.log(`TCP closed but queue > 0, setting reconnect timer`);
+    log.warn(`TCP closed but queue > 0, setting reconnect timer`);
     this.reconnect_timer = setTimeout(this._connect_to_device, 1000);
   }
 }
