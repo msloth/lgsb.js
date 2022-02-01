@@ -7,11 +7,11 @@
 // TODO:
 // 
 // * examples
-// * input get/set wrappers
 // * handle all tcp events, including errors
 // * autodiscovery if IP isn't known (does not answer SSDP it seems)
 // * test what happens if soundbar is not on network
 // * equalizers
+// * handle cipher errors, has happened after a call is done
 // * handle race condition when two calls are made, yet the first is not yet
 //   connected, two system calls for socket is made -> crash
 //    -> change flag to eg "connected_or_connecting"
