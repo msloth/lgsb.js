@@ -54,6 +54,56 @@ const ciphertype = 'aes-256-cbc';
 const iv = "'%^Ur7gy$~t+f)%@";
 const key = "T^&*J%^7tr~4^%^&I(o%^!jIJ__+a0 k";
 /*---------------------------------------------------------------------------*/
+// const equalizers = ["Standard", "Bass", "Flat", "Boost", "Treble and Bass", "User",
+//               "Music", "Cinema", "Night", "News", "Voice", "ia_sound",
+//               "Adaptive Sound Control", "Movie", "Bass Blast", "Dolby Atmos",
+//               "DTS Virtual X", "Bass Boost Plus", "DTS X"];
+
+// STANDARD = 0
+// BASS = 1
+// FLAT = 2
+// BOOST = 3
+// TREBLE_BASS = 4
+// USER_EQ = 5
+// MUSIC = 6
+// CINEMA = 7
+// NIGHT = 8
+// NEWS = 9
+// VOICE = 10
+// IA_SOUND = 11
+// ASC = 12
+// MOVIE = 13
+// BASS_BLAST = 14
+// DOLBY_ATMOS = 15
+// DTS_VIRTUAL_X = 16
+// BASS_BOOST_PLUS = 17
+// DTS_X = 18
+
+// const inputs = ["Wifi", "Bluetooth", "Portable", "Aux", "Optical", "CP", "HDMI",
+//              "ARC", "Spotify", "Optical2", "HDMI2", "HDMI3", "LG TV", "Mic",
+//              "Chromecast", "Optical/HDMI ARC", "LG Optical", "FM", "USB", "USB2"];
+
+// WIFI = 0
+// BLUETOOTH = 1
+// PORTABLE = 2
+// AUX = 3
+// OPTICAL = 4
+// CP = 5
+// HDMI = 6
+// ARC = 7
+// SPOTIFY = 8
+// OPTICAL_2 = 9
+// HDMI_2 = 10
+// HDMI_3 = 11
+// LG_TV = 12
+// MIC = 13
+// C4A = 14
+// OPTICAL_HDMIARC = 15
+// LG_OPTICAL = 16
+// FM = 17
+// USB = 18
+// USB_2 = 19
+/*---------------------------------------------------------------------------*/
 // "hack" to get the function name, which simplifies logging statements.
 function functionname() {
   return functionname.caller.name
