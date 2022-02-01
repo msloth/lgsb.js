@@ -317,11 +317,7 @@ let _setter = function(category, setwhat, callback, logname) {
 }
 /*---------------------------------------------------------------------------*/
 let set_night_mode = function(enable, callback) {
-// XXXXX this one is wrong, should be either
-//   // b_night_time
-  // b_nighttime_enable
-
-  this._setter_view_info({"b_night_mode": enable}, callback, functionname());
+  this._setter_view_info({"b_night_time": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_avc = function(enable, callback) {
