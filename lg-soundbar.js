@@ -82,49 +82,27 @@ const key = "T^&*J%^7tr~4^%^&I(o%^!jIJ__+a0 k";
 // BASS_BOOST_PLUS = 17
 // DTS_X = 18
 
-const inputs = ["Wifi",
-                "Bluetooth",
-                "Portable",
-                "Aux",
-                "Optical",
-                "CP",
-                "HDMI",
-                "ARC",
-                "Spotify",
-                "Optical2",
-                "HDMI2",
-                "HDMI3",
-                "LG TV",
-                "Mic",
-                "Chromecast",
-                "Optical/HDMI ARC",
-                "LG Optical",
-                "FM",
-                "USB",
-                "USB2",
-                "E-ARC"];
-
-// WIFI = 0
-// BLUETOOTH = 1
-// PORTABLE = 2
-// AUX = 3
-// OPTICAL = 4
-// CP = 5
-// HDMI = 6
-// ARC = 7
-// SPOTIFY = 8
-// OPTICAL_2 = 9
-// HDMI_2 = 10
-// HDMI_3 = 11
-// LG_TV = 12
-// MIC = 13
-// C4A = 14
-// OPTICAL_HDMIARC = 15
-// LG_OPTICAL = 16
-// FM = 17
-// USB = 18
-// USB_2 = 19
-// E_ARC = 20
+const inputs = ["Wifi",                       // 0
+                "Bluetooth",                  // 1
+                "Portable",                   // 2
+                "Aux",                        // 3
+                "Optical",                    // 4
+                "CP",                         // 5
+                "HDMI",                       // 6
+                "ARC",                        // 7
+                "Spotify",                    // 8
+                "Optical2",                   // 9
+                "HDMI2",                      // 10
+                "HDMI3",                      // 11
+                "LG TV",                      // 12
+                "Mic",                        // 13
+                "Chromecast",                 // 14
+                "Optical/HDMI ARC",           // 15
+                "LG Optical",                 // 16
+                "FM",                         // 17
+                "USB",                        // 18
+                "USB2",                       // 19
+                "E-ARC"];                     // 20
 /*---------------------------------------------------------------------------*/
 // "hack" to get the function name, which simplifies logging statements.
 function functionname() {
@@ -475,8 +453,27 @@ let set_eq = function(eq, callback) {
   this._setter("EQ_VIEW_INFO" ,{"i_curr_eq": eq}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
-let set_input = function(value, callback) {
+// not used directly, instead call set_input with string
+let set_input_raw = function(value, callback) {
   this._setter("FUNC_VIEW_INFO" ,{"i_curr_func": value}, callback, functionname());
+}
+/*---------------------------------------------------------------------------*/
+// eg set_input("hdmi", ...). Case insensitive
+// note that not all are accepted; eg e-arc was not, instead on SP8YA
+// input Optical (4) was used, then the tv+soundbar made a handshake-> earc
+let set_input = function(input, callback) {
+
+  // find the number that the soundbar may accept
+  let inputnum = 0;
+  for (let i = 0; i < inputs.length; i++) {
+    if (input.toLowerCase() == inputs[i].toLowerCase()) {
+      log.warn(`Set input to ${inputs[i]}`);
+      this.set_input_raw(i, callback);
+    }
+  }
+
+  // no match found
+  log.warn(`no match found for ${input}`);
 }
 /*---------------------------------------------------------------------------*/
 let set_volume = function(value, callback) {
@@ -584,6 +581,7 @@ lg_soundbar.prototype.set_bt_standby = set_bt_standby;
 lg_soundbar.prototype.set_bt_restrict = set_bt_restrict;
 lg_soundbar.prototype.set_sleep_time = set_sleep_time;
 lg_soundbar.prototype.set_eq = set_eq;
+lg_soundbar.prototype.set_input_raw = set_input_raw;
 lg_soundbar.prototype.set_input = set_input;
 lg_soundbar.prototype.factory_reset = factory_reset;
 lg_soundbar.prototype.test_tone = test_tone;
