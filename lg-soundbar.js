@@ -43,6 +43,10 @@
 /*---------------------------------------------------------------------------*/
 const net = require('net');
 const crypto = require("crypto");
+
+const log = require('loglevel');
+log.setLevel("trace"); // silent, error, warn, info, debug, trace
+// log.setLevel("silent"); // silent, error, warn, info, debug, trace
 /*---------------------------------------------------------------------------*/
 // cipher
 const ciphertype = 'aes-256-cbc';
@@ -100,19 +104,19 @@ let _create_packet = function(data) {
 let _send_to_device = function() {
   // sanity check: are we even needed?
   if (this.sendqueue.length === 0) {
-    console.log(`send, but queue at 0 so returning; letting live auto for a few seconds`);
+    log.log(`send, but queue at 0 so returning; letting live auto for a few seconds`);
     return;
   }
 
   // sanity check: are we currently waiting for an connect/answer?
   if (this.current_send) {
-    console.log(`send, but already current, ie waiting for answer`);
+    log.log(`send, but already current, ie waiting for answer`);
     return;
   }
 
-  console.log(`Sending... Queue at ${this.sendqueue.length}`);
+  log.log(`Sending... Queue at ${this.sendqueue.length}`);
   if (!this.is_connected) {
-    console.log(`...but not connected yet.`);
+    log.log(`...but not connected yet.`);
     this._connect_to_device();
 
   } else {
@@ -123,7 +127,7 @@ let _send_to_device = function() {
     }
 
     // send over network
-    console.log(this.current_send.command);
+    log.log(this.current_send.command);
     let payload = this._create_packet(this.current_send.command);
     this.tcpclient.write(payload);
 
@@ -141,7 +145,7 @@ let _send_to_device = function() {
 /*---------------------------------------------------------------------------*/
 // Terminate the TCP connection, mostly from a timer if the connection is idle
 let _disconnect = function() {
-  console.log(`Closing connection`);
+  log.log(`Closing connection`);
 
   // stop timer if running
   if (this.auto_disconnect_timer) {
@@ -154,16 +158,16 @@ let _disconnect = function() {
 /*---------------------------------------------------------------------------*/
 let _connect_to_device = function() {
   if (this.is_connected) {
-    console.log(`Connect, but already connected`);
+    log.log(`Connect, but already connected`);
     return;
   }
 
-  console.log(`Connecting... Queue at ${this.sendqueue.length}`);
+  log.log(`Connecting... Queue at ${this.sendqueue.length}`);
   this.tcpclient.connect(this.tcpport, this.ipaddr, _tcp_opened.bind(this));
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_opened = function() {
-  console.log(`TCP Connected... Queue at ${this.sendqueue.length}`);
+  log.log(`TCP Connected... Queue at ${this.sendqueue.length}`);
   this.is_connected = true;
   this.auto_disconnect_timer = 
       setTimeout(this._disconnect.bind(this), this.auto_disconnect_timeout);
@@ -176,14 +180,14 @@ let _tcp_opened = function() {
 // Note: needs hardening
 let _tcp_data = function(data) {
   if (data[0] != 0x10) {
-    console.log(`warning: header magic not ok`);
+    log.log(`warning: header magic not ok`);
   }
 
   let rxed = _decrypt(data.slice(5));
   let ans = JSON.parse(rxed);
 
   if (this.current_send) {
-    console.log(`current send exists`);
+    log.log(`current send exists`);
     this.current_send.callback(ans);
 
     // clear it, so we know to pick the next queue if such
@@ -195,7 +199,7 @@ let _tcp_data = function(data) {
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_closed = function() {
-  console.log('TCP Connection closed');
+  log.log('TCP Connection closed');
   this.is_connected = false;
 
   // stop timer if running; if anything restarts the connection, the timer will
@@ -207,7 +211,7 @@ let _tcp_closed = function() {
 
   // if we should reconnect, set that up
   if (this.sendqueue.length > 0) {
-    console.log(`TCP closed but queue > 0, setting reconnect timer`);
+    log.log(`TCP closed but queue > 0, setting reconnect timer`);
     this.reconnect_timer = setTimeout(this._connect_to_device, 1000);
   }
 }
@@ -226,7 +230,7 @@ let _tcp_closed = function() {
 
 /*---------------------------------------------------------------------------*/
 let _getter = function(getwhat, callback, logname) {
-  console.log(`${logname}`);
+  log.log(`${logname}`);
   this.sendqueue.push({
     command: {"cmd": "get", "msg": getwhat},
     callback: callback});
@@ -301,7 +305,7 @@ let get_test_info = function(callback) {
 
 /*---------------------------------------------------------------------------*/
 let _setter_view_info = function(setwhat, callback, logname) {
-  console.log(`${logname}`);
+  log.log(`${logname}`);
   this.sendqueue.push({
     command: {"cmd": "set", "data": setwhat, "msg": "SETTING_VIEW_INFO"},
     callback: callback});
@@ -310,7 +314,7 @@ let _setter_view_info = function(setwhat, callback, logname) {
 }
 /*---------------------------------------------------------------------------*/
 let _setter = function(category, setwhat, callback, logname) {
-  console.log(`${logname}`);
+  log.log(`${logname}`);
   this.sendqueue.push({
     command: {"cmd": "set", "data": setwhat, "msg": category},
     callback: callback});
@@ -403,7 +407,7 @@ let set_mute = function(enable, callback) {
 }
 /*---------------------------------------------------------------------------*/
 let factory_reset = function(callback) {
-  console.log(`Factory reset requested`);
+  log.log(`Factory reset requested`);
   this.sendqueue.push({
     command: {"cmd": "set", "msg": "FACTORY_SET_REQ"},
     callback: callback});
@@ -412,7 +416,7 @@ let factory_reset = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
 let test_tone = function(callback) {
-  console.log(`Test tone requested`);
+  log.log(`Test tone requested`);
   this.sendqueue.push({
     command: {"cmd": "set", "msg": "TEST_TONE_REQ"},
     callback: callback});
