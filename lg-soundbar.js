@@ -533,9 +533,6 @@ let get_mute = function(callback) {
 /*---------------------------------------------------------------------------*/
 let get_nightmode = function(callback) {
   this.get_info((result) => {
-    // one of these, but which?:
-    // b_night_time
-    // b_nighttime_enable
     callback(result.data.b_night_time);
   });
 }
