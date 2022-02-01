@@ -610,7 +610,33 @@ let get_nightmode = function(callback) {
   });
 }
 /*---------------------------------------------------------------------------*/
+let get_name = function(callback) {
+  this.get_info((result) => {
+    callback(result.data.s_user_name);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_product = function(callback) {
+  this.get_product_info((result) => {
+    callback(result.data.s_model_name);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_input = function(callback) {
+  this.get_func((result) => {
+    let ans = "Unknown";
+    let funcnum = result.data.i_curr_func;
+    if (funcnum < inputs.length) {
+      ans = inputs[funcnum];
+    }
+    callback(ans);
+  });
+}
+/*---------------------------------------------------------------------------*/
 // wrappers and new
+lg_soundbar.prototype.get_name = get_name;
+lg_soundbar.prototype.get_product = get_product;
+lg_soundbar.prototype.get_input = get_input;
 lg_soundbar.prototype.get_speakerinfo = get_speakerinfo;
 lg_soundbar.prototype.get_volume = get_volume;
 lg_soundbar.prototype.get_mute = get_mute;
