@@ -195,7 +195,15 @@ let _tcp_data = function(data) {
   }
 
   // start/keep sending
-  this._send_to_device();
+  // XXX Here, we can either keep on sending OR disconnect and let the "closed"-
+  // handler reconnect (if more in queue).
+  // Keep on -  lower latency
+  //            probably more threadsafe
+  //            "Get"s aren't necessarily accurate (if written during same conn)
+  // Disconnect - reconnect timer adds latency
+  //              "Get"s are always accurate
+  this._send_to_device(); // keep on
+  // this._disconnect(); // disconnect
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_closed = function() {
