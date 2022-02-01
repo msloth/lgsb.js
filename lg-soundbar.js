@@ -12,7 +12,10 @@
 // * autodiscovery if IP isn't known (does not answer SSDP it seems)
 // * test what happens if soundbar is not on network
 // * equalizers
-// 
+// * handle race condition when two calls are made, yet the first is not yet
+//   connected, two system calls for socket is made -> crash
+//    -> change flag to eg "connected_or_connecting"
+//    
 // * harden up the data receive with sanity checks that valid packet was received
 //    --sometimes cryptolib complains, perhaps too large incoming so divided into
 //      >1 packet -> fragmented incoming
@@ -453,7 +456,7 @@ let set_eq = function(eq, callback) {
   this._setter("EQ_VIEW_INFO" ,{"i_curr_eq": eq}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
-let set_func = function(value, callback) {
+let set_input = function(value, callback) {
   this._setter("FUNC_VIEW_INFO" ,{"i_curr_func": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
@@ -562,7 +565,7 @@ lg_soundbar.prototype.set_bt_standby = set_bt_standby;
 lg_soundbar.prototype.set_bt_restrict = set_bt_restrict;
 lg_soundbar.prototype.set_sleep_time = set_sleep_time;
 lg_soundbar.prototype.set_eq = set_eq;
-lg_soundbar.prototype.set_func = set_func;
+lg_soundbar.prototype.set_input = set_input;
 lg_soundbar.prototype.factory_reset = factory_reset;
 lg_soundbar.prototype.test_tone = test_tone;
 /*---------------------------------------------------------------------------*/
