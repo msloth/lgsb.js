@@ -484,10 +484,10 @@ let test_tone = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
 class lg_soundbar {
-  constructor() {
+  constructor(ip) {
     // -------------------------------
     // connection
-    this.ipaddr = "192.168.1.135";
+    this.ipaddr = ip;
     this.tcpport = 9741;
     this.is_connected = false;
     this.sendqueue = [];
