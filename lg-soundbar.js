@@ -82,9 +82,27 @@ const key = "T^&*J%^7tr~4^%^&I(o%^!jIJ__+a0 k";
 // BASS_BOOST_PLUS = 17
 // DTS_X = 18
 
-// const inputs = ["Wifi", "Bluetooth", "Portable", "Aux", "Optical", "CP", "HDMI",
-//              "ARC", "Spotify", "Optical2", "HDMI2", "HDMI3", "LG TV", "Mic",
-//              "Chromecast", "Optical/HDMI ARC", "LG Optical", "FM", "USB", "USB2"];
+const inputs = ["Wifi",
+                "Bluetooth",
+                "Portable",
+                "Aux",
+                "Optical",
+                "CP",
+                "HDMI",
+                "ARC",
+                "Spotify",
+                "Optical2",
+                "HDMI2",
+                "HDMI3",
+                "LG TV",
+                "Mic",
+                "Chromecast",
+                "Optical/HDMI ARC",
+                "LG Optical",
+                "FM",
+                "USB",
+                "USB2",
+                "E-ARC"];
 
 // WIFI = 0
 // BLUETOOTH = 1
@@ -106,6 +124,7 @@ const key = "T^&*J%^7tr~4^%^&I(o%^!jIJ__+a0 k";
 // FM = 17
 // USB = 18
 // USB_2 = 19
+// E_ARC = 20
 /*---------------------------------------------------------------------------*/
 // "hack" to get the function name, which simplifies logging statements.
 function functionname() {
