@@ -8,11 +8,16 @@
 // TODO:
 // 
 // * harden up the data receive with sanity checks that valid packet was received
+//    --sometimes cryptolib complains, perhaps too large incoming so divided into
+//      >1 packet -> fragmented incoming
 // * better match up request->answer->callback
-// * test what happens if not on network
+// * test what happens if soundbar is not on network
 // * autodiscovery if IP isn't known (does not answer SSDP it seems)
-// * verify night mode
+// * verify night mode - which setting is it?
 // * clean up logging
+// * tests
+// * examples
+// * better docs
 /*---------------------------------------------------------------------------*/
 // This library is built upon https://github.com/google/python-temescal which
 // is Google-hosted, but is not in any way affiliated, associated, or endorsed
