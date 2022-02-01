@@ -1,9 +1,8 @@
 /*---------------------------------------------------------------------------*/
 // This is a library for interfacing LG Soundbars.
 // 
-// This library will automatically set up a connection to the speaker, maintain
-// it as long as there are outstanding queries, and automatically close connection
-// when done.
+// This library will automatically handle the connection to the speaker,
+// automatically maintain/close/reconnect as needed.
 /*---------------------------------------------------------------------------*/
 // TODO:
 // 
@@ -11,17 +10,20 @@
 //    --sometimes cryptolib complains, perhaps too large incoming so divided into
 //      >1 packet -> fragmented incoming
 // * better match up request->answer->callback
+// * handle all tcp events, including errors
 // * test what happens if soundbar is not on network
 // * autodiscovery if IP isn't known (does not answer SSDP it seems)
-// * verify night mode - which setting is it?
-// * clean up logging
 // * tests
 // * examples
 // * better docs
+// * perhaps divide up, no queue but instead one full TCP up-send-down per command
+//    --values aren't updated until TCP reconnected it seems.
+//      a set-get (ie write, then immediately read) of a value, will read the
+//      value as it was _before_ the write, not what was written.
 /*---------------------------------------------------------------------------*/
 // This library is built upon https://github.com/google/python-temescal which
 // is Google-hosted, but is not in any way affiliated, associated, or endorsed
-// by Google.
+// by Google. Temescal documented the packet format and encryption key+iv.  
 // 
 // For https://github.com/google/python-temescal :
 // 
