@@ -1,6 +1,6 @@
 {
   "name": "lgsb",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Library for interacting with LG Soundbars.",
   "main": "lg-soundbar.js",
   "repository": {
