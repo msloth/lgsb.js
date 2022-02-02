@@ -1,12 +1,28 @@
 {
   "name": "lgsb",
   "version": "1.0.0",
-  "description": "",
+  "description": "Library for interacting with LG Soundbars.",
   "main": "lg-soundbar.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/msloth/lgsb.js/"
+  },
+  "bugs": {
+    "url": "https://github.com/msloth/lgsb.js/issues"
+  },
+  "homepage": "https://github.com/msloth/lgsb.js/",
+  "keywords": [
+    "tv",
+    "smarttv",
+    "soundbar",
+    "soundsystem",
+    "remote",
+    "control"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Marcus Linderoth <linderoth.marcus@gmail.com> (https://github.com/msloth)",
   "dependencies": {
     "loglevel": "^1.8.0"
   }
