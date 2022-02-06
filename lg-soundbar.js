@@ -7,9 +7,10 @@
 // TODO:
 // 
 // * examples
-// * handle all tcp events, including errors
 // * fix disconnect, doesn't immediately shut down all (timer left?) 
 // * autodiscovery if IP isn't known (does not answer SSDP it seems)
+// * if waking up soundbar, after it responding, it sends something more, that
+//      the decrypt breaks on. What is that?
 // * test what happens if soundbar is not on network
 // * handle race condition when two calls are made, yet the first is not yet
 //   connected, two system calls for socket is made -> crash
