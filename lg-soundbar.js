@@ -8,17 +8,13 @@
 // 
 // * examples
 // * handle all tcp events, including errors
+// * fix disconnect, doesn't immediately shut down all (timer left?) 
 // * autodiscovery if IP isn't known (does not answer SSDP it seems)
 // * test what happens if soundbar is not on network
-// * equalizers
-// * handle cipher errors, has happened after a call is done
 // * handle race condition when two calls are made, yet the first is not yet
 //   connected, two system calls for socket is made -> crash
 //    -> change flag to eg "connected_or_connecting"
 //    
-// * harden up the data receive with sanity checks that valid packet was received
-//    --sometimes cryptolib complains, perhaps too large incoming so divided into
-//      >1 packet -> fragmented incoming
 // * better match up request->answer->callback
 // * perhaps divide up, no queue but instead one full TCP up-send-down per command
 //    --values aren't updated until TCP reconnected it seems.
@@ -49,38 +45,38 @@ const net = require('net');
 const crypto = require("crypto");
 
 const log = require('loglevel');
-log.setLevel("trace"); // silent, error, warn, info, debug, trace
-// log.setLevel("silent"); // silent, error, warn, info, debug, trace
+/*---------------------------------------------------------------------------*/
+const running_as_script = (require.main === module);
+if (running_as_script) {
+  log.setLevel("trace"); // silent, error, warn, info, debug, trace
+} else {
+  log.setLevel("silent"); // silent, error, warn, info, debug, trace
+}
 /*---------------------------------------------------------------------------*/
 // cipher
 const ciphertype = 'aes-256-cbc';
 const iv = "'%^Ur7gy$~t+f)%@";
 const key = "T^&*J%^7tr~4^%^&I(o%^!jIJ__+a0 k";
 /*---------------------------------------------------------------------------*/
-// const equalizers = ["Standard", "Bass", "Flat", "Boost", "Treble and Bass", "User",
-//               "Music", "Cinema", "Night", "News", "Voice", "ia_sound",
-//               "Adaptive Sound Control", "Movie", "Bass Blast", "Dolby Atmos",
-//               "DTS Virtual X", "Bass Boost Plus", "DTS X"];
-
-// STANDARD = 0
-// BASS = 1
-// FLAT = 2
-// BOOST = 3
-// TREBLE_BASS = 4
-// USER_EQ = 5
-// MUSIC = 6
-// CINEMA = 7
-// NIGHT = 8
-// NEWS = 9
-// VOICE = 10
-// IA_SOUND = 11
-// ASC = 12
-// MOVIE = 13
-// BASS_BLAST = 14
-// DOLBY_ATMOS = 15
-// DTS_VIRTUAL_X = 16
-// BASS_BOOST_PLUS = 17
-// DTS_X = 18
+const equalizers = ["Standard",
+                    "Bass",
+                    "Flat",
+                    "Boost",
+                    "Treble and Bass",
+                    "User",
+                    "Music",
+                    "Cinema",
+                    "Night",
+                    "News",
+                    "Voice",
+                    "ia_sound",
+                    "Adaptive Sound Control",
+                    "Movie",
+                    "Bass Blast",
+                    "Dolby Atmos",
+                    "DTS Virtual X",
+                    "Bass Boost Plus",
+                    "DTS X",];
 
 const inputs = ["Wifi",                       // 0
                 "Bluetooth",                  // 1
@@ -116,10 +112,15 @@ let _encrypt = function(data) {
 }
 /*---------------------------------------------------------------------------*/
 let _decrypt = function(data) {
-  let decrypter = crypto.createDecipheriv(ciphertype, key, iv);
-  let decrypted = decrypter.update(data, "binary") + decrypter.final("binary");
-  decrypted = decrypted.toString('utf8');
-  return decrypted;
+  try {
+    let decrypter = crypto.createDecipheriv(ciphertype, key, iv);
+    let decrypted = decrypter.update(data, "binary") + decrypter.final("binary");
+    decrypted = decrypted.toString('utf8');
+    return decrypted;
+  } catch(error) {
+    log.error(`failed decrypting: ${data}`);
+    return undefined;
+  }
 }
 /*---------------------------------------------------------------------------*/
 // every packet to/from the Soundbar has a 5B header, then the JSON data in
@@ -235,11 +236,19 @@ let _tcp_data = function(data) {
   }
 
   let rxed = _decrypt(data.slice(5));
-  let ans = JSON.parse(rxed);
+  if (rxed != undefined) {
+    try {
+      rxed = JSON.parse(rxed);
+    } catch(error) {
+      log.error(`failed parsing received as JSON: ${rxed}`);
+      rxed = undefined;
+    }
+  }
 
   if (this.current_send) {
+    // note: if we failed decrypt or parse, answer is undefined
     log.log(`current send exists`);
-    this.current_send.callback(ans);
+    this.current_send.callback(rxed);
 
     // clear it, so we know to pick the next queue if such
     this.current_send = undefined;
@@ -639,4 +648,20 @@ lg_soundbar.prototype.get_speakerinfo = get_speakerinfo;
 lg_soundbar.prototype.get_volume = get_volume;
 lg_soundbar.prototype.get_mute = get_mute;
 lg_soundbar.prototype.get_nightmode = get_nightmode;
+/*---------------------------------------------------------------------------*/
+if (running_as_script) {
+  // if called directly from commandline, we run a small example/test
+  // ie not "require"d
+  let lgsb = new lg_soundbar("192.168.1.135");
+
+  lgsb.get_nightmode((enabled) => {
+    console.log(`Night mode enabled? ${enabled}`);
+    if (enabled) {
+      const new_vol = 11;
+      console.log(`Setting volume to ${new_vol}`);
+      lgsb.set_volume(new_vol, () => {
+      });
+    }
+  });
+}
 /*---------------------------------------------------------------------------*/
