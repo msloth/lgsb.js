@@ -57,30 +57,25 @@ const ciphertype = 'aes-256-cbc';
 const iv = "'%^Ur7gy$~t+f)%@";
 const key = "T^&*J%^7tr~4^%^&I(o%^!jIJ__+a0 k";
 /*---------------------------------------------------------------------------*/
-// const equalizers = ["Standard", "Bass", "Flat", "Boost", "Treble and Bass", "User",
-//               "Music", "Cinema", "Night", "News", "Voice", "ia_sound",
-//               "Adaptive Sound Control", "Movie", "Bass Blast", "Dolby Atmos",
-//               "DTS Virtual X", "Bass Boost Plus", "DTS X"];
-
-// STANDARD = 0
-// BASS = 1
-// FLAT = 2
-// BOOST = 3
-// TREBLE_BASS = 4
-// USER_EQ = 5
-// MUSIC = 6
-// CINEMA = 7
-// NIGHT = 8
-// NEWS = 9
-// VOICE = 10
-// IA_SOUND = 11
-// ASC = 12
-// MOVIE = 13
-// BASS_BLAST = 14
-// DOLBY_ATMOS = 15
-// DTS_VIRTUAL_X = 16
-// BASS_BOOST_PLUS = 17
-// DTS_X = 18
+const equalizers = ["Standard",
+                    "Bass",
+                    "Flat",
+                    "Boost",
+                    "Treble and Bass",
+                    "User",
+                    "Music",
+                    "Cinema",
+                    "Night",
+                    "News",
+                    "Voice",
+                    "ia_sound",
+                    "Adaptive Sound Control",
+                    "Movie",
+                    "Bass Blast",
+                    "Dolby Atmos",
+                    "DTS Virtual X",
+                    "Bass Boost Plus",
+                    "DTS X",];
 
 const inputs = ["Wifi",                       // 0
                 "Bluetooth",                  // 1
