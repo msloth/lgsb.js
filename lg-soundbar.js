@@ -8,6 +8,7 @@
 // 
 // * examples
 // * handle all tcp events, including errors
+// * fix disconnect, doesn't immediately shut down all (timer left?) 
 // * autodiscovery if IP isn't known (does not answer SSDP it seems)
 // * test what happens if soundbar is not on network
 // * handle race condition when two calls are made, yet the first is not yet
@@ -44,8 +45,13 @@ const net = require('net');
 const crypto = require("crypto");
 
 const log = require('loglevel');
-log.setLevel("trace"); // silent, error, warn, info, debug, trace
-// log.setLevel("silent"); // silent, error, warn, info, debug, trace
+/*---------------------------------------------------------------------------*/
+const running_as_script = (require.main === module);
+if (running_as_script) {
+  log.setLevel("trace"); // silent, error, warn, info, debug, trace
+} else {
+  log.setLevel("silent"); // silent, error, warn, info, debug, trace
+}
 /*---------------------------------------------------------------------------*/
 // cipher
 const ciphertype = 'aes-256-cbc';
@@ -643,7 +649,7 @@ lg_soundbar.prototype.get_volume = get_volume;
 lg_soundbar.prototype.get_mute = get_mute;
 lg_soundbar.prototype.get_nightmode = get_nightmode;
 /*---------------------------------------------------------------------------*/
-if (require.main === module) {
+if (running_as_script) {
   // if called directly from commandline, we run a small example/test
   // ie not "require"d
   let lgsb = new lg_soundbar("192.168.1.135");
@@ -651,8 +657,10 @@ if (require.main === module) {
   lgsb.get_nightmode((enabled) => {
     console.log(`Night mode enabled? ${enabled}`);
     if (enabled) {
-      console.log(`Setting volume to 10`);
-      lgsb.set_volume(10, () => {});
+      const new_vol = 11;
+      console.log(`Setting volume to ${new_vol}`);
+      lgsb.set_volume(new_vol, () => {
+      });
     }
   });
 }
