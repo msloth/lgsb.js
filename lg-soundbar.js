@@ -111,10 +111,15 @@ let _encrypt = function(data) {
 }
 /*---------------------------------------------------------------------------*/
 let _decrypt = function(data) {
-  let decrypter = crypto.createDecipheriv(ciphertype, key, iv);
-  let decrypted = decrypter.update(data, "binary") + decrypter.final("binary");
-  decrypted = decrypted.toString('utf8');
-  return decrypted;
+  try {
+    let decrypter = crypto.createDecipheriv(ciphertype, key, iv);
+    let decrypted = decrypter.update(data, "binary") + decrypter.final("binary");
+    decrypted = decrypted.toString('utf8');
+    return decrypted;
+  } catch(error) {
+    log.error(`failed decrypting: ${data}`);
+    return undefined;
+  }
 }
 /*---------------------------------------------------------------------------*/
 // every packet to/from the Soundbar has a 5B header, then the JSON data in
