@@ -643,3 +643,17 @@ lg_soundbar.prototype.get_volume = get_volume;
 lg_soundbar.prototype.get_mute = get_mute;
 lg_soundbar.prototype.get_nightmode = get_nightmode;
 /*---------------------------------------------------------------------------*/
+if (require.main === module) {
+  // if called directly from commandline, we run a small example/test
+  // ie not "require"d
+  let lgsb = new lg_soundbar("192.168.1.135");
+
+  lgsb.get_nightmode((enabled) => {
+    console.log(`Night mode enabled? ${enabled}`);
+    if (enabled) {
+      console.log(`Setting volume to 10`);
+      lgsb.set_volume(10, () => {});
+    }
+  });
+}
+/*---------------------------------------------------------------------------*/
