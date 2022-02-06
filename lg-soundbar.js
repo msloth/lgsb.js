@@ -119,6 +119,7 @@ let _decrypt = function(data) {
     return decrypted;
   } catch(error) {
     log.error(`failed decrypting: ${data}`);
+    log.error(error);
     return undefined;
   }
 }
@@ -223,6 +224,14 @@ let _tcp_opened = function() {
   this.is_connected = true;
   this.auto_disconnect_timer = 
       setTimeout(this._disconnect.bind(this), this.auto_disconnect_timeout);
+
+  // start/keep sending
+  this._send_to_device();
+}
+/*---------------------------------------------------------------------------*/
+let _tcp_error = function() {
+  log.log(`TCP error... Queue at ${this.sendqueue.length}`);
+  this.is_connected = false;
 
   // start/keep sending
   this._send_to_device();
@@ -532,7 +541,9 @@ class lg_soundbar {
     this.tcpclient = new net.Socket();
     this.tcpclient.on('close', _tcp_closed.bind(this));
     this.tcpclient.on('data', _tcp_data.bind(this));
+    this.tcpclient.on('error', _tcp_error.bind(this));
     // we don't open the socket until we send something
+    // other events: end (remote end closed), ready, timeout
 
     // -------------------------------
     // internal helpers
@@ -573,6 +584,7 @@ lg_soundbar.prototype.get_test_info = get_test_info;
 lg_soundbar.prototype.set_volume = set_volume;
 lg_soundbar.prototype.set_mute = set_mute;
 lg_soundbar.prototype.set_night_mode = set_night_mode;
+lg_soundbar.prototype.set_input = set_input;
 
 lg_soundbar.prototype.set_avc = set_avc;
 lg_soundbar.prototype.set_drc = set_drc;
@@ -591,7 +603,6 @@ lg_soundbar.prototype.set_bt_restrict = set_bt_restrict;
 lg_soundbar.prototype.set_sleep_time = set_sleep_time;
 lg_soundbar.prototype.set_eq = set_eq;
 lg_soundbar.prototype.set_input_raw = set_input_raw;
-lg_soundbar.prototype.set_input = set_input;
 lg_soundbar.prototype.factory_reset = factory_reset;
 lg_soundbar.prototype.test_tone = test_tone;
 /*---------------------------------------------------------------------------*/
