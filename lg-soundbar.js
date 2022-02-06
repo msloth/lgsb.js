@@ -236,7 +236,12 @@ let _tcp_data = function(data) {
 
   let rxed = _decrypt(data.slice(5));
   if (rxed != undefined) {
-    rxed = JSON.parse(rxed);
+    try {
+      rxed = JSON.parse(rxed);
+    } catch(error) {
+      log.error(`failed parsing received as JSON: ${rxed}`);
+      rxed = undefined;
+    }
   }
 
   if (this.current_send) {
