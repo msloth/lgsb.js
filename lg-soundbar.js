@@ -10,15 +10,10 @@
 // * handle all tcp events, including errors
 // * autodiscovery if IP isn't known (does not answer SSDP it seems)
 // * test what happens if soundbar is not on network
-// * equalizers
-// * handle cipher errors, has happened after a call is done
 // * handle race condition when two calls are made, yet the first is not yet
 //   connected, two system calls for socket is made -> crash
 //    -> change flag to eg "connected_or_connecting"
 //    
-// * harden up the data receive with sanity checks that valid packet was received
-//    --sometimes cryptolib complains, perhaps too large incoming so divided into
-//      >1 packet -> fragmented incoming
 // * better match up request->answer->callback
 // * perhaps divide up, no queue but instead one full TCP up-send-down per command
 //    --values aren't updated until TCP reconnected it seems.
