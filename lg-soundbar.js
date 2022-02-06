@@ -230,11 +230,14 @@ let _tcp_data = function(data) {
   }
 
   let rxed = _decrypt(data.slice(5));
-  let ans = JSON.parse(rxed);
+  if (rxed != undefined) {
+    rxed = JSON.parse(rxed);
+  }
 
   if (this.current_send) {
+    // note: if we failed decrypt or parse, answer is undefined
     log.log(`current send exists`);
-    this.current_send.callback(ans);
+    this.current_send.callback(rxed);
 
     // clear it, so we know to pick the next queue if such
     this.current_send = undefined;
