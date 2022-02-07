@@ -59,31 +59,31 @@ const ciphertype = 'aes-256-cbc';
 const iv = "'%^Ur7gy$~t+f)%@";
 const key = "T^&*J%^7tr~4^%^&I(o%^!jIJ__+a0 k";
 /*---------------------------------------------------------------------------*/
-const equalizers = ["Standard",
-                    "Bass",
-                    "Flat",
-                    "Boost",
-                    "Treble and Bass",
-                    "User",
-                    "Music",
-                    "Cinema",
-                    "Night",
-                    "News",
-                    "Voice",
-                    "ia_sound",
-                    "Adaptive Sound Control",
-                    "Movie",
-                    "Bass Blast",
-                    "Dolby Atmos",
-                    "DTS Virtual X",
-                    "Bass Boost Plus",
-                    "DTS X",];
+const equalizers = ["Standard",               // 0
+                    "Bass",                   // 1
+                    "Flat",                   // 2
+                    "Boost",                  // 3
+                    "Treble and Bass",        // 4
+                    "User",                   // 5
+                    "Music",                  // 6
+                    "Cinema",                 // 7
+                    "Night",                  // 8
+                    "News",                   // 9
+                    "Voice",                  // 10
+                    "ia_sound",               // 11
+                    "Adaptive Sound Control", // 12
+                    "Movie",                  // 13
+                    "Bass Blast",             // 14
+                    "Dolby Atmos",            // 15
+                    "DTS Virtual X",          // 16
+                    "Bass Boost Plus",        // 17
+                    "DTS X",];                // 18
 
 const inputs = ["Wifi",                       // 0
                 "Bluetooth",                  // 1
                 "Portable",                   // 2
                 "Aux",                        // 3
-                "Optical",                    // 4
+                "Optical",                    // 4 <- for e-arc when set'ting
                 "CP",                         // 5
                 "HDMI",                       // 6
                 "ARC",                        // 7
@@ -99,7 +99,7 @@ const inputs = ["Wifi",                       // 0
                 "FM",                         // 17
                 "USB",                        // 18
                 "USB2",                       // 19
-                "E-ARC"];                     // 20
+                "E-ARC"];                     // 20 <- when reading (get)
 /*---------------------------------------------------------------------------*/
 // "hack" to get the function name, which simplifies logging statements.
 function functionname() {
@@ -662,6 +662,14 @@ lg_soundbar.prototype.get_speakerinfo = get_speakerinfo;
 lg_soundbar.prototype.get_volume = get_volume;
 lg_soundbar.prototype.get_mute = get_mute;
 lg_soundbar.prototype.get_nightmode = get_nightmode;
+/*---------------------------------------------------------------------------*/
+let set_logging = function(level) {
+  if (["silent", "error", "warn", "info", "debug", "trace"].indexOf(level) >= 0) {
+    log.setLevel(level); // silent, error, warn, info, debug, trace
+  }
+}
+
+lg_soundbar.prototype.set_logging = set_logging; // set logging level
 /*---------------------------------------------------------------------------*/
 if (running_as_script) {
   // if called directly from commandline, we run a small example/test
