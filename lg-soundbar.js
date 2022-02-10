@@ -314,7 +314,7 @@ let _tcp_closed = function() {
 
 
 /*---------------------------------------------------------------------------*/
-let _getter = function(getwhat, callback, logname) {
+let _get = function(getwhat, callback, logname) {
   log.log(`${logname}`);
   this.sendqueue.push({
     command: {"cmd": "get", "msg": getwhat},
@@ -324,68 +324,62 @@ let _getter = function(getwhat, callback, logname) {
 }
 /*---------------------------------------------------------------------------*/
 let get_eq = function(callback) {
-  this._getter("EQ_VIEW_INFO", callback, functionname());
+  this._get("EQ_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_play = function(callback) {
-  this._getter("PLAY_INFO", callback, functionname());
+  this._get("PLAY_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_func = function(callback) {
-  this._getter("FUNC_VIEW_INFO", callback, functionname());
+  this._get("FUNC_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_settings = function(callback) {
-  this._getter("SETTING_VIEW_INFO", callback, functionname());
+  this._get("SETTING_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_product_info = function(callback) {
-  this._getter("PRODUCT_INFO", callback, functionname());
+  this._get("PRODUCT_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_c4a_info = function(callback) {
-  this._getter("C4A_SETTING_INFO", callback, functionname());
+  this._get("C4A_SETTING_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_radio_info = function(callback) {
-  this._getter("RADIO_VIEW_INFO", callback, functionname());
+  this._get("RADIO_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_ap_info = function(callback) {
-  this._getter("SHARE_AP_INFO", callback, functionname());
+  this._get("SHARE_AP_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_update_info = function(callback) {
-  this._getter("UPDATE_VIEW_INFO", callback, functionname());
+  this._get("UPDATE_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_build_info = function(callback) {
-  this._getter("BUILD_INFO_DEV", callback, functionname());
+  this._get("BUILD_INFO_DEV", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_option_info = function(callback) {
-  this._getter("OPTION_INFO_DEV", callback, functionname());
+  this._get("OPTION_INFO_DEV", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_mac_info = function(callback) {
-  this._getter("MAC_INFO_DEV", callback, functionname());
+  this._get("MAC_INFO_DEV", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_mem_mon_info = function(callback) {
-  this._getter("MEM_MON_DEV", callback, functionname());
+  this._get("MEM_MON_DEV", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_test_info = function(callback) {
-  this._getter("TEST_DEV", callback, functionname());
+  this._get("TEST_DEV", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
-
-
-
-
-
-/*---------------------------------------------------------------------------*/
-let _setter_view_info = function(setwhat, callback, logname) {
+let _set_view_info = function(setwhat, callback, logname) {
   log.log(`${logname}`);
   this.sendqueue.push({
     command: {"cmd": "set", "data": setwhat, "msg": "SETTING_VIEW_INFO"},
@@ -394,7 +388,7 @@ let _setter_view_info = function(setwhat, callback, logname) {
   this._send_to_device();
 }
 /*---------------------------------------------------------------------------*/
-let _setter = function(category, setwhat, callback, logname) {
+let _set = function(category, setwhat, callback, logname) {
   log.log(`${logname}`);
   this.sendqueue.push({
     command: {"cmd": "set", "data": setwhat, "msg": category},
@@ -404,67 +398,67 @@ let _setter = function(category, setwhat, callback, logname) {
 }
 /*---------------------------------------------------------------------------*/
 let set_night_mode = function(enable, callback) {
-  this._setter_view_info({"b_night_time": enable}, callback, functionname());
+  this._set_view_info({"b_night_time": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_avc = function(enable, callback) {
-  this._setter_view_info({"b_auto_vol": enable}, callback, functionname());
+  this._set_view_info({"b_auto_vol": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_drc = function(enable, callback) {
-  this._setter_view_info({"b_drc": enable}, callback, functionname());
+  this._set_view_info({"b_drc": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_neuralx = function(enable, callback) {
-  this._setter_view_info({"b_neuralx": enable}, callback, functionname());
+  this._set_view_info({"b_neuralx": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_av_sync = function(value, callback) {
-  this._setter_view_info({"i_av_sync": value}, callback, functionname());
+  this._set_view_info({"i_av_sync": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_woofer_level = function(value, callback) {
-  this._setter_view_info({"i_woofer_level": value}, callback, functionname());
+  this._set_view_info({"i_woofer_level": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_rear_control = function(enable, callback) {
-  this._setter_view_info({"b_rear": enable}, callback, functionname());
+  this._set_view_info({"b_rear": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_rear_level = function(value, callback) {
-  this._setter_view_info({"i_rear_level": value}, callback, functionname());
+  this._set_view_info({"i_rear_level": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_top_level = function(value, callback) {
-  this._setter_view_info({"i_top_level": value}, callback, functionname());
+  this._set_view_info({"i_top_level": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_center_level = function(value, callback) {
-  this._setter_view_info({"i_center_level": value}, callback, functionname());
+  this._set_view_info({"i_center_level": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_tv_remote = function(enable, callback) {
-  this._setter_view_info({"b_tv_remote": enable}, callback, functionname());
+  this._set_view_info({"b_tv_remote": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_auto_power = function(enable, callback) {
-  this._setter_view_info({"b_auto_power": enable}, callback, functionname());
+  this._set_view_info({"b_auto_power": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_auto_display = function(enable, callback) {
-  this._setter_view_info({"b_auto_display": enable}, callback, functionname());
+  this._set_view_info({"b_auto_display": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_bt_standby = function(enable, callback) {
-  this._setter_view_info({"b_bt_standby": enable}, callback, functionname());
+  this._set_view_info({"b_bt_standby": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_bt_restrict = function(enable, callback) {
-  this._setter_view_info({"b_conn_bt_limit": enable}, callback, functionname());
+  this._set_view_info({"b_conn_bt_limit": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_sleep_time = function(value, callback) {
-  this._setter_view_info({"i_sleep_time": value}, callback, functionname());
+  this._set_view_info({"i_sleep_time": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_name = function(name, callback) {
@@ -477,7 +471,7 @@ let set_eq = function(eq, callback) {
 /*---------------------------------------------------------------------------*/
 // not used directly, instead call set_input with string
 let set_input_raw = function(value, callback) {
-  this._setter("FUNC_VIEW_INFO" ,{"i_curr_func": value}, callback, functionname());
+  this._set("FUNC_VIEW_INFO" ,{"i_curr_func": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 // eg set_input("hdmi", ...). Case insensitive
@@ -486,24 +480,23 @@ let set_input_raw = function(value, callback) {
 let set_input = function(input, callback) {
 
   // find the number that the soundbar may accept
-  let inputnum = 0;
   for (let i = 0; i < inputs.length; i++) {
     if (input.toLowerCase() == inputs[i].toLowerCase()) {
-      log.warn(`Set input to ${inputs[i]}`);
+      log.info(`Set input to ${inputs[i]}`);
       this.set_input_raw(i, callback);
     }
   }
 
   // no match found
-  log.warn(`no match found for ${input}`);
+  log.warn(`no input match found for ${input}`);
 }
 /*---------------------------------------------------------------------------*/
 let set_volume = function(value, callback) {
-  this._setter("SPK_LIST_VIEW_INFO" ,{"i_vol": value}, callback, functionname());
+  this._set("SPK_LIST_VIEW_INFO" ,{"i_vol": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_mute = function(enable, callback) {
-  this._setter("SPK_LIST_VIEW_INFO" ,{"b_mute": enable}, callback, functionname());
+  this._set("SPK_LIST_VIEW_INFO" ,{"b_mute": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let factory_reset = function(callback) {
@@ -695,7 +688,7 @@ lg_soundbar.prototype.factory_reset = factory_reset;
 lg_soundbar.prototype.test_tone = test_tone;
 /*---------------------------------------------------------------------------*/
 let get_speakerinfo = function(callback) {
-  this._getter("SPK_LIST_VIEW_INFO", callback, functionname());
+  this._get("SPK_LIST_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_volume = function(callback) {
