@@ -621,13 +621,13 @@ let get_mute = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
 let get_nightmode = function(callback) {
-  this.get_info((result) => {
+  this.get_settings((result) => {
     callback(result.data.b_night_time);
   });
 }
 /*---------------------------------------------------------------------------*/
 let get_name = function(callback) {
-  this.get_info((result) => {
+  this.get_settings((result) => {
     callback(result.data.s_user_name);
   });
 }
