@@ -1,8 +1,16 @@
 # lgsb.js
 
-This is a library for interfacing LG Soundbars. I've only tested on my own soundbar, the LG SP8YA, but it seems SN9YG and others may work too.
+This is a library for interfacing LG Soundbars.
 
-## Quick-start
+## Hardware
+
+This library only works with LG Soundsystems. Unclear exactly which ones, but feel free to drop a comment or PR if you've tested this on other hardware.
+
+Known working with LG SP8YA, seems SN9YG works too from reading comments on others using the other library (temescal).
+
+## Usage
+
+### Basic example
 
 ```
 const lg_soundbar = require('lgsb.js');
@@ -16,6 +24,10 @@ lgsb.get_nightmode((enabled) => {
   }
 });
 ```
+
+### Other uses
+
+Lacking full documentation yet, feel free to look at what functions the class exports.
 
 ## Rationale
 

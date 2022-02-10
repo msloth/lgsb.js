@@ -240,7 +240,29 @@ mem_mon
 test_dev
 (no answer, timed out)
 /*---------------------------------------------------------------------------*/
-
+get_speakerinfo
+{
+  msg: 'SPK_LIST_VIEW_INFO',
+  cmd: 'notibyget',
+  data: {
+    i_vol: 7,
+    i_vol_min: 0,
+    i_vol_max: 40,
+    b_mute: false,
+    b_avsmrm_status: false,
+    i_calibration_status: 0,
+    i_curr_func: 4,
+    b_wow_connect: false,
+    b_support_avsmrm: true,
+    b_spotify_connect: false,
+    b_soundbarmode: false,
+    b_func_pictogram: true,
+    b_update: false,
+    s_user_name: 'LG_Speaker_SP8YA'
+  },
+  result: 'ok'
+}
+--------------------------------------------------------------------------------
 
 
 
