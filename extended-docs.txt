@@ -18,51 +18,6 @@ func
   result: 'ok'
 }
 /*---------------------------------------------------------------------------*/
-info
-{
-  msg: 'SETTING_VIEW_INFO',
-  cmd: 'notibyget',
-  data: {
-    b_support_avsmrm: true,
-    b_neuralx: false,
-    i_av_sync: 0,
-    b_night_time: false,
-    i_woofer_min: -15,
-    b_nighttime_enable: true,
-    b_drc: false,
-    s_user_name: 'LG_Speaker_SP8YA',
-    b_auto_vol: false,
-    s_ipv6_addr: 'fda2:84f3:a02a:0:e1db:77a1:64f0:21e',
-    b_auto_power: true,
-    b_tv_remote: true,
-    b_rear: false,
-    b_support_diag: true,
-    b_wow_connect: false,
-    i_center_level: 6,
-    b_enable_dialog: false,
-    i_rear_max: 6,
-    b_set_device_name: false,
-    i_woofer_max: 6,
-    b_avsmrm_status: false,
-    b_soundbarmode: false,
-    i_dialog_min: 0,
-    i_woofer_level: 15,
-    i_rear_level: 6,
-    i_top_min: -6,
-    i_rear_min: -6,
-    i_top_level: 6,
-    i_top_max: 6,
-    i_dialog_level: 0,
-    i_center_min: -6,
-    i_center_max: 6,
-    i_dialog_max: 6,
-    i_calibration_status: 0,
-    i_curr_eq: 0,
-    s_ipv4_addr: '192.168.1.135'
-  },
-  result: 'ok'
-}
-/*---------------------------------------------------------------------------*/
 play
 {
   msg: 'PLAY_INFO',
