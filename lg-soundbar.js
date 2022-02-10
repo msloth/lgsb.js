@@ -322,7 +322,7 @@ let _tcp_closed = function() {
 
 /*---------------------------------------------------------------------------*/
 let _get = function(getwhat, callback, logname) {
-  log.log(`${logname}`);
+  log.log(`lgsb.js: running ${logname}`);
   this.sendqueue.push({
     command: {"cmd": "get", "msg": getwhat},
     callback: callback});
