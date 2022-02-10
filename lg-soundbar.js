@@ -163,7 +163,7 @@ let _create_packet = function(data) {
 let _send_to_device = function() {
   // sanity check: are we even needed?
   if (this.sendqueue.length === 0) {
-    log.log(`lgsb.js: send, but queue at 0 so returning; letting live auto for a few seconds`);
+    log.log(`lgsb.js: send, but queue at 0 so returning; letting live ${this.auto_disconnect_timeout} ms`);
     return;
   }
 
