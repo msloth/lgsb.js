@@ -654,7 +654,12 @@ let get_input = function(callback) {
   });
 }
 /*---------------------------------------------------------------------------*/
-// wrappers and new
+let get_basic_info = function(callback) {
+}
+/*---------------------------------------------------------------------------*/
+let get_info = function(callback) {
+}
+/*---------------------------------------------------------------------------*/
 lg_soundbar.prototype.get_name = get_name;
 lg_soundbar.prototype.get_product = get_product;
 lg_soundbar.prototype.get_input = get_input;
@@ -662,6 +667,8 @@ lg_soundbar.prototype.get_speakerinfo = get_speakerinfo;
 lg_soundbar.prototype.get_volume = get_volume;
 lg_soundbar.prototype.get_mute = get_mute;
 lg_soundbar.prototype.get_nightmode = get_nightmode;
+lg_soundbar.prototype.get_basic_info = get_basic_info;
+lg_soundbar.prototype.get_info = get_info;
 /*---------------------------------------------------------------------------*/
 let set_logging = function(level) {
   if (["silent", "error", "warn", "info", "debug", "trace"].indexOf(level) >= 0) {
