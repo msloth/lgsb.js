@@ -49,7 +49,7 @@ const log = require('loglevel');
 /*---------------------------------------------------------------------------*/
 const running_as_script = (require.main === module);
 if (running_as_script) {
-  log.setLevel("trace"); // silent, error, warn, info, debug, trace
+  log.setLevel("debug"); // silent, error, warn, info, debug, trace
 } else {
   log.setLevel("silent"); // silent, error, warn, info, debug, trace
 }
@@ -186,8 +186,8 @@ let _send_to_device = function() {
     }
 
     // send over network
-    log.trace(`lgsb.js: current command: `);
-    log.trace(this.current_send.command);
+    log.debug(`lgsb.js: current command: `);
+    log.debug(this.current_send.command);
     let payload = this._create_packet(this.current_send.command);
     this.tcpclient.write(payload);
 
@@ -548,7 +548,7 @@ let set_volume = function(value, callback) {
     }
   }
 
-  log.trace(`lgsb.js: set vol; relative: ${relative_vol}, neg: ${negative}, number: ${parsed}`);
+  log.debug(`lgsb.js: set vol; relative: ${relative_vol}, neg: ${negative}, number: ${parsed}`);
   if (relative_vol) {
     get_vol((nowvol) => {
       if (negative) {
@@ -561,7 +561,7 @@ let set_volume = function(value, callback) {
       }
 
       // set volume
-      log.trace(`lgsb.js: volume set relative to ${newvol}`);
+      log.debug(`lgsb.js: volume set relative to ${newvol}`);
       this.set_volume_raw(newvol, callback);
       return;
     });
@@ -571,7 +571,7 @@ let set_volume = function(value, callback) {
     newvol = parsed;
   }
 
-  log.trace(`lgsb.js: volume set absolute to ${newvol}`);
+  log.debug(`lgsb.js: volume set absolute to ${newvol}`);
   this.set_volume_raw(newvol, callback);
 }
 /*---------------------------------------------------------------------------*/
