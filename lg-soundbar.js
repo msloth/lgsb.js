@@ -505,6 +505,76 @@ let set_input = function(input, callback) {
 }
 /*---------------------------------------------------------------------------*/
 let set_volume = function(value, callback) {
+  let parsed = 0;
+  let relative_vol = false;
+  let negative = false;
+  let newvol = 0;
+
+  // volume is absolute if:
+  //    is string && string does not contain "-" or "+"
+  //    number && number > 0
+  // otherwise relative.
+  if (typeof value === "string") {
+    if (value.indexOf("+") === 0 || value.indexOf("-") === 0) {
+      // handle "+5", "-5"
+      relative_vol = true;
+      if (value.indexOf("-") === 0) {
+        negative = true;
+      }
+      parsed = parseInt(value.replace("-","").replace("+",""), 10);
+    } else {
+      // handle "5"
+      relative_vol = false;
+      parsed = parseInt(value, 10);
+    }
+
+    if (isNaN(parsed)) {
+      // not ok parsed, bail out
+      log.warn(`lgsb.js: error parsing volume as string from input, bailing. Input: ${value}`);
+      if (callback) {
+        callback(undefined);
+      }
+      return;
+    }
+
+  } else {
+    // handle integers: -5 and 5; but only relative if negative, otherwise absolute
+    parsed = value;
+    if (parsed < 0) {
+      relative_vol = true;
+      negative = true;
+      parsed = Math.abs(value);
+    }
+  }
+
+  log.trace(`lgsb.js: set vol; relative: ${relative_vol}, neg: ${negative}, number: ${parsed}`);
+  if (relative_vol) {
+    get_vol((nowvol) => {
+      if (negative) {
+        newvol = nowvol - parsed;
+      } else {
+        newvol = nowvol + parsed;
+      }
+      if (newvol < 0) {
+        newvol = 0;
+      }
+
+      // set volume
+      log.trace(`lgsb.js: volume set relative to ${newvol}`);
+      this.set_volume_raw(newvol, callback);
+      return;
+    });
+
+  } else {
+    // absolute volume, just take the parsed number
+    newvol = parsed;
+  }
+
+  log.trace(`lgsb.js: volume set absolute to ${newvol}`);
+  this.set_volume_raw(newvol, callback);
+}
+/*---------------------------------------------------------------------------*/
+let set_volume_raw = function(value, callback) {
   this._set("SPK_LIST_VIEW_INFO" ,{"i_vol": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
@@ -738,8 +808,15 @@ lg_soundbar.prototype.get_basic_info = get_basic_info;
 lg_soundbar.prototype.get_info = get_info;
 
 // ---------------------------------------------------Sets
-// set master volume, integer between min and max (on SP8YA 0..40 inclusive)
+// set master volume, integer or string, where can be absolute number, or relative
+// in which case the current volume will be fetched first.
+// eg set_volume(7)
+// eg set_volume("7")
+// eg set_volume("+2")
 lg_soundbar.prototype.set_volume = set_volume;
+
+// set master volume, integer between min and max (on SP8YA 0..40 inclusive)
+lg_soundbar.prototype.set_volume_raw = set_volume_raw;
 
 // set mute status, boolean
 lg_soundbar.prototype.set_mute = set_mute;
