@@ -322,10 +322,6 @@ let get_eq = function(callback) {
   this._getter("EQ_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
-let get_info = function(callback) {
-  this._getter("SETTING_VIEW_INFO", callback, functionname());
-}
-/*---------------------------------------------------------------------------*/
 let get_play = function(callback) {
   this._getter("PLAY_INFO", callback, functionname());
 }
@@ -568,7 +564,6 @@ exports.lg_soundbar = lg_soundbar;
 // external functions
 // Get
 lg_soundbar.prototype.get_eq = get_eq;
-lg_soundbar.prototype.get_info = get_info;
 lg_soundbar.prototype.get_play = get_play;
 lg_soundbar.prototype.get_func = get_func;
 lg_soundbar.prototype.get_settings = get_settings;
@@ -657,7 +652,7 @@ let get_input = function(callback) {
 let get_basic_info = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
-let get_full_info = function(callback) {
+let get_info = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
 // get the text-friendly name of the device; can be set by user, eg "LG_Speaker_SP8YA"
@@ -685,7 +680,7 @@ lg_soundbar.prototype.get_nightmode = get_nightmode;
 lg_soundbar.prototype.get_basic_info = get_basic_info;
 
 // get full informations
-lg_soundbar.prototype.get_full_info = get_full_info;
+lg_soundbar.prototype.get_info = get_info;
 /*---------------------------------------------------------------------------*/
 let set_logging = function(level) {
   if (["silent", "error", "warn", "info", "debug", "trace"].indexOf(level) >= 0) {
