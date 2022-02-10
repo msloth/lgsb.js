@@ -462,11 +462,24 @@ let set_sleep_time = function(value, callback) {
 }
 /*---------------------------------------------------------------------------*/
 let set_name = function(name, callback) {
-  this._setter_view_info({"s_user_name": name}, callback, functionname());
+  this._set_view_info({"s_user_name": name}, callback, functionname());
+}
+/*---------------------------------------------------------------------------*/
+let set_eq_raw = function(eq, callback) {
+  this._set("EQ_VIEW_INFO" ,{"i_curr_eq": eq}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_eq = function(eq, callback) {
-  this._setter("EQ_VIEW_INFO" ,{"i_curr_eq": eq}, callback, functionname());
+  // find the number that the soundbar may accept
+  for (let i = 0; i < equalizers.length; i++) {
+    if (eq.toLowerCase() == equalizers[i].toLowerCase()) {
+      log.info(`Set equalizer to ${equalizers[i]}`);
+      this.set_eq_raw(i, callback);
+    }
+  }
+
+  // no match found
+  log.warn(`no eq match found for ${eq}`);
 }
 /*---------------------------------------------------------------------------*/
 // not used directly, instead call set_input with string
@@ -682,8 +695,6 @@ lg_soundbar.prototype.set_auto_display = set_auto_display;
 lg_soundbar.prototype.set_bt_standby = set_bt_standby;
 lg_soundbar.prototype.set_bt_restrict = set_bt_restrict;
 lg_soundbar.prototype.set_sleep_time = set_sleep_time;
-lg_soundbar.prototype.set_eq = set_eq;
-lg_soundbar.prototype.set_input_raw = set_input_raw;
 lg_soundbar.prototype.factory_reset = factory_reset;
 lg_soundbar.prototype.test_tone = test_tone;
 /*---------------------------------------------------------------------------*/
