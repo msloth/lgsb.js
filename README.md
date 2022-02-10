@@ -62,10 +62,25 @@ lgsb.auto_disconnect_timeout = 100; // ms
 // ....
 ```
 
-Or, disconnect explicitly:
+Or, disconnect explicitly when done:
 
 ```
 let lgsb = new lg_soundbar("192.168.1.135");
+
+lgsb.get_basic_info((ret) => {
+  console.log(ret);
+  lgsb._disconnect();
+});
+/*---------------------------------------------------------------------------*/
+```
+
+A third option is to have the library always disconnect after receiving data. This is experimental still. Positive: ensures we're always disconnected after we're done (no long wait after the last transmission), and values are always correct. Negative: adds latency.
+
+```
+let lgsb = new lg_soundbar("192.168.1.135");
+
+// disconnect after each answer
+lgsb.always_disconnect = true;
 
 lgsb.get_basic_info((ret) => {
   console.log(ret);
