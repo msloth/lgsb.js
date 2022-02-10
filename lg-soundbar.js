@@ -59,6 +59,7 @@ const ciphertype = 'aes-256-cbc';
 const iv = "'%^Ur7gy$~t+f)%@";
 const key = "T^&*J%^7tr~4^%^&I(o%^!jIJ__+a0 k";
 /*---------------------------------------------------------------------------*/
+// List of equalizers.
 const equalizers = ["Standard",               // 0
                     "Bass",                   // 1
                     "Flat",                   // 2
@@ -78,6 +79,10 @@ const equalizers = ["Standard",               // 0
                     "DTS Virtual X",          // 16
                     "Bass Boost Plus",        // 17
                     "DTS X",];                // 18
+/*---------------------------------------------------------------------------*/
+// List of possible inputs. Note that the speaker doesn't necessarily support all.
+// Also note that, to get to E-ARC, you don't set input to "E-ARC" (20), instead
+// input 4 ("Optical") is used (at least on SP8YA).
 
 const inputs = ["Wifi",                       // 0
                 "Bluetooth",                  // 1
@@ -553,36 +558,121 @@ class lg_soundbar {
     this._send_to_device = _send_to_device.bind(this);
     this._disconnect = _disconnect.bind(this);
     this._tcp_opened = _tcp_opened.bind(this);
-    this._getter = _getter.bind(this);
-    this._setter_view_info = _setter_view_info.bind(this);
-    this._setter = _setter.bind(this);
+
+    // not meant for external use since they're kind of raw
+    this._get = _get.bind(this);
+    this._set_view_info = _set_view_info.bind(this);
+    this._set = _set.bind(this);
   }
 }
 /*---------------------------------------------------------------------------*/
 exports.lg_soundbar = lg_soundbar;
 
-// external functions
-// Get
+// In the below, anything marked as (raw*) returns the raw query answer from the
+// speaker, as an object (speaker answers in JSON). This means that the info
+// you're after may be a couple of layers deep down. See the extended-docs.txt
+// for examples.
+// 
+// Functions _not_ marked as (raw*) returns either a boolean, string, or integer.
+// Eg volume -> 10, or nightmode -> false.
+
+// ---------------------------------------------------Gets
+// (raw*) get equalizer settings
 lg_soundbar.prototype.get_eq = get_eq;
+
+// (raw*) get play information (eg what's playing)
 lg_soundbar.prototype.get_play = get_play;
+
+// (raw*) get eg input
 lg_soundbar.prototype.get_func = get_func;
+
+// (raw*) get settings, eg night mode and per-channel settings
 lg_soundbar.prototype.get_settings = get_settings;
+
+// (raw*) get information on this product, eg product name
 lg_soundbar.prototype.get_product_info = get_product_info;
+
+// (raw*) get c4a status (EULA agreement?)
 lg_soundbar.prototype.get_c4a_info = get_c4a_info;
+
+// (raw*) get 
 lg_soundbar.prototype.get_radio_info = get_radio_info;
+
+// (raw*) (unknown, "not supported" on SP8YA)
 lg_soundbar.prototype.get_ap_info = get_ap_info;
+
+// (raw*) get firmware update information
 lg_soundbar.prototype.get_update_info = get_update_info;
+
+// (raw*) get system software information
 lg_soundbar.prototype.get_build_info = get_build_info;
+
+// (raw*) get product options info (region info?)
 lg_soundbar.prototype.get_option_info = get_option_info;
+
+// (raw*) get UUID and wifi/mac MAC address information
 lg_soundbar.prototype.get_mac_info = get_mac_info;
+
+// (raw*) (unknown, no answer)
 lg_soundbar.prototype.get_mem_mon_info = get_mem_mon_info;
+
+// (raw*) (unknown, no answer)
 lg_soundbar.prototype.get_test_info = get_test_info;
 
-// Set
+// (raw*) get various information, such as volume.
+lg_soundbar.prototype.get_speakerinfo = get_speakerinfo;
+
+// get the text-friendly name of the device; can be set by user, string eg "LG_Speaker_SP8YA"
+lg_soundbar.prototype.get_name = get_name;
+
+// get the device product name, string eg "SP8YA"
+lg_soundbar.prototype.get_product = get_product;
+
+// get the current input name, string eg "Bluetooth"
+lg_soundbar.prototype.get_input = get_input;
+
+// get master volume, integer eg 10
+lg_soundbar.prototype.get_volume = get_volume;
+
+// get whether this is muted. boolean eg false 
+lg_soundbar.prototype.get_mute = get_mute;
+
+// get whether night mode is active. boolean eg false 
+lg_soundbar.prototype.get_nightmode = get_nightmode;
+
+// get basic information: input, volume, etc. Returns an object.
+lg_soundbar.prototype.get_basic_info = get_basic_info;
+
+// get full information. Returns an object.
+lg_soundbar.prototype.get_info = get_info;
+
+// ---------------------------------------------------Sets
+// set master volume, integer between min and max (on SP8YA 0..40 inclusive)
 lg_soundbar.prototype.set_volume = set_volume;
+
+// set mute status, boolean
 lg_soundbar.prototype.set_mute = set_mute;
+
+// set night mode status, boolean
 lg_soundbar.prototype.set_night_mode = set_night_mode;
+
+// set input, string that must match inputs, but case insensitive.
+// See list of inputs above.
+// eg set_input("hdmi")
 lg_soundbar.prototype.set_input = set_input;
+
+// set input, integer. See list of inputs to match.
+// eg set_input_raw(4)
+lg_soundbar.prototype.set_input_raw = set_input_raw;
+
+// set equalizer, string that must match eqs, case insensitive.
+// See list of equalizers above.
+// eg set_eq("standard")
+lg_soundbar.prototype.set_eq = set_eq;
+
+// set equalizer, integer. See list of equalizer to match.
+// eg set_eq_raw(4)
+lg_soundbar.prototype.set_eq_raw = set_eq_raw;
 
 lg_soundbar.prototype.set_avc = set_avc;
 lg_soundbar.prototype.set_drc = set_drc;
@@ -679,33 +769,6 @@ let get_basic_info = function(callback) {
 /*---------------------------------------------------------------------------*/
 let get_info = function(callback) {
 }
-/*---------------------------------------------------------------------------*/
-// get the text-friendly name of the device; can be set by user, eg "LG_Speaker_SP8YA"
-lg_soundbar.prototype.get_name = get_name;
-
-// get the device product name, eg "SP8YA"
-lg_soundbar.prototype.get_product = get_product;
-
-// get the current input name, eg "Bluetooth"
-lg_soundbar.prototype.get_input = get_input;
-
-// 
-lg_soundbar.prototype.get_speakerinfo = get_speakerinfo;
-
-// get master volume, eg 10
-lg_soundbar.prototype.get_volume = get_volume;
-
-// get whether this is muted, boolean. Eg false 
-lg_soundbar.prototype.get_mute = get_mute;
-
-// get whether night mode is active, boolean. Eg false 
-lg_soundbar.prototype.get_nightmode = get_nightmode;
-
-// get basic information: input, volume, etc
-lg_soundbar.prototype.get_basic_info = get_basic_info;
-
-// get full information
-lg_soundbar.prototype.get_info = get_info;
 /*---------------------------------------------------------------------------*/
 let set_logging = function(level) {
   if (["silent", "error", "warn", "info", "debug", "trace"].indexOf(level) >= 0) {
