@@ -49,7 +49,7 @@ const log = require('loglevel');
 /*---------------------------------------------------------------------------*/
 const running_as_script = (require.main === module);
 if (running_as_script) {
-  log.setLevel("trace"); // silent, error, warn, info, debug, trace
+  log.setLevel("debug"); // silent, error, warn, info, debug, trace
 } else {
   log.setLevel("silent"); // silent, error, warn, info, debug, trace
 }
@@ -59,6 +59,7 @@ const ciphertype = 'aes-256-cbc';
 const iv = "'%^Ur7gy$~t+f)%@";
 const key = "T^&*J%^7tr~4^%^&I(o%^!jIJ__+a0 k";
 /*---------------------------------------------------------------------------*/
+// List of equalizers.
 const equalizers = ["Standard",               // 0
                     "Bass",                   // 1
                     "Flat",                   // 2
@@ -78,6 +79,10 @@ const equalizers = ["Standard",               // 0
                     "DTS Virtual X",          // 16
                     "Bass Boost Plus",        // 17
                     "DTS X",];                // 18
+/*---------------------------------------------------------------------------*/
+// List of possible inputs. Note that the speaker doesn't necessarily support all.
+// Also note that, to get to E-ARC, you don't set input to "E-ARC" (20), instead
+// input 4 ("Optical") is used (at least on SP8YA).
 
 const inputs = ["Wifi",                       // 0
                 "Bluetooth",                  // 1
@@ -119,7 +124,7 @@ let _decrypt = function(data) {
     decrypted = decrypted.toString('utf8');
     return decrypted;
   } catch(error) {
-    log.error(`failed decrypting: ${data}`);
+    log.error(`lgsb.js: failed decrypting: ${data}`);
     log.error(error);
     return undefined;
   }
@@ -158,19 +163,19 @@ let _create_packet = function(data) {
 let _send_to_device = function() {
   // sanity check: are we even needed?
   if (this.sendqueue.length === 0) {
-    log.log(`send, but queue at 0 so returning; letting live auto for a few seconds`);
+    log.log(`lgsb.js: send, but queue at 0 so returning; letting live ${this.auto_disconnect_timeout} ms`);
     return;
   }
 
   // sanity check: are we currently waiting for an connect/answer?
   if (this.current_send) {
-    log.log(`send, but already current, ie waiting for answer`);
+    log.log(`lgsb.js: send, but already current, ie waiting for answer`);
     return;
   }
 
-  log.log(`Sending... Queue at ${this.sendqueue.length}`);
+  log.log(`lgsb.js: Sending... Queue at ${this.sendqueue.length}`);
   if (!this.is_connected) {
-    log.warn(`Send, but not connected yet.`);
+    log.warn(`lgsb.js: Send, but not connected yet.`);
     this._connect_to_device();
 
   } else {
@@ -181,11 +186,15 @@ let _send_to_device = function() {
     }
 
     // send over network
-    log.log(this.current_send.command);
+    log.debug(`lgsb.js: current command: `);
+    log.debug(this.current_send.command);
     let payload = this._create_packet(this.current_send.command);
     this.tcpclient.write(payload);
 
     // restart timer
+    if (this.auto_disconnect_timer) {
+      clearTimeout(this.auto_disconnect_timer);
+    }
     this.auto_disconnect_timer = 
       setTimeout(this._disconnect.bind(this), this.auto_disconnect_timeout);
 
@@ -199,7 +208,7 @@ let _send_to_device = function() {
 /*---------------------------------------------------------------------------*/
 // Terminate the TCP connection, mostly from a timer if the connection is idle
 let _disconnect = function() {
-  log.log(`Closing connection`);
+  log.log(`lgsb.js: Closing connection`);
 
   // stop timer if running
   if (this.auto_disconnect_timer) {
@@ -212,16 +221,16 @@ let _disconnect = function() {
 /*---------------------------------------------------------------------------*/
 let _connect_to_device = function() {
   if (this.is_connected) {
-    log.log(`Connect, but already connected`);
+    log.log(`lgsb.js: Connect, but already connected`);
     return;
   }
 
-  log.log(`Connecting... Queue at ${this.sendqueue.length}`);
+  log.log(`lgsb.js: Connecting... Queue at ${this.sendqueue.length}`);
   this.tcpclient.connect(this.tcpport, this.ipaddr, _tcp_opened.bind(this));
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_opened = function() {
-  log.log(`TCP Connected... Queue at ${this.sendqueue.length}`);
+  log.log(`lgsb.js: TCP Connected... Queue at ${this.sendqueue.length}`);
   this.is_connected = true;
   this.auto_disconnect_timer = 
       setTimeout(this._disconnect.bind(this), this.auto_disconnect_timeout);
@@ -231,7 +240,7 @@ let _tcp_opened = function() {
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_error = function() {
-  log.log(`TCP error... Queue at ${this.sendqueue.length}`);
+  log.log(`lgsb.js: TCP error... Queue at ${this.sendqueue.length}`);
   this.is_connected = false;
 
   // start/keep sending
@@ -242,7 +251,7 @@ let _tcp_error = function() {
 // Note: needs hardening
 let _tcp_data = function(data) {
   if (data[0] != 0x10) {
-    log.warn(`warning: header magic not ok`);
+    log.warn(`lgsb.js: warning: rx header magic not ok`);
   }
 
   let rxed = _decrypt(data.slice(5));
@@ -250,14 +259,14 @@ let _tcp_data = function(data) {
     try {
       rxed = JSON.parse(rxed);
     } catch(error) {
-      log.error(`failed parsing received as JSON: ${rxed}`);
+      log.error(`lgsb.js: failed parsing received as JSON: ${rxed}`);
       rxed = undefined;
     }
   }
 
   if (this.current_send) {
     // note: if we failed decrypt or parse, answer is undefined
-    log.log(`current send exists`);
+    log.log(`lgsb.js: current send exists`);
     if (this.current_send.callback) {
       this.current_send.callback(rxed);
     }
@@ -274,12 +283,15 @@ let _tcp_data = function(data) {
   //            "Get"s aren't necessarily accurate (if written during same conn)
   // Disconnect - reconnect timer adds latency
   //              "Get"s are always accurate
-  this._send_to_device(); // keep on
-  // this._disconnect(); // disconnect
+  if (this.always_disconnect) {
+    this._disconnect(); // disconnect
+  } else {
+    this._send_to_device(); // keep on
+  }
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_closed = function() {
-  log.log('TCP Connection closed');
+  log.log('lgsb.js: TCP Connection closed');
   this.is_connected = false;
 
   // stop timer if running; if anything restarts the connection, the timer will
@@ -291,7 +303,7 @@ let _tcp_closed = function() {
 
   // if we should reconnect, set that up
   if (this.sendqueue.length > 0) {
-    log.warn(`TCP closed but queue > 0, setting reconnect timer`);
+    log.warn(`lgsb.js: TCP closed but queue > 0, setting reconnect timer`);
     this.reconnect_timer = setTimeout(this._connect_to_device, 1000);
   }
 }
@@ -309,8 +321,8 @@ let _tcp_closed = function() {
 
 
 /*---------------------------------------------------------------------------*/
-let _getter = function(getwhat, callback, logname) {
-  log.log(`${logname}`);
+let _get = function(getwhat, callback, logname) {
+  log.log(`lgsb.js: running ${logname}`);
   this.sendqueue.push({
     command: {"cmd": "get", "msg": getwhat},
     callback: callback});
@@ -319,73 +331,63 @@ let _getter = function(getwhat, callback, logname) {
 }
 /*---------------------------------------------------------------------------*/
 let get_eq = function(callback) {
-  this._getter("EQ_VIEW_INFO", callback, functionname());
-}
-/*---------------------------------------------------------------------------*/
-let get_info = function(callback) {
-  this._getter("SETTING_VIEW_INFO", callback, functionname());
+  this._get("EQ_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_play = function(callback) {
-  this._getter("PLAY_INFO", callback, functionname());
+  this._get("PLAY_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_func = function(callback) {
-  this._getter("FUNC_VIEW_INFO", callback, functionname());
+  this._get("FUNC_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_settings = function(callback) {
-  this._getter("SETTING_VIEW_INFO", callback, functionname());
+  this._get("SETTING_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_product_info = function(callback) {
-  this._getter("PRODUCT_INFO", callback, functionname());
+  this._get("PRODUCT_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_c4a_info = function(callback) {
-  this._getter("C4A_SETTING_INFO", callback, functionname());
+  this._get("C4A_SETTING_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_radio_info = function(callback) {
-  this._getter("RADIO_VIEW_INFO", callback, functionname());
+  this._get("RADIO_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_ap_info = function(callback) {
-  this._getter("SHARE_AP_INFO", callback, functionname());
+  this._get("SHARE_AP_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_update_info = function(callback) {
-  this._getter("UPDATE_VIEW_INFO", callback, functionname());
+  this._get("UPDATE_VIEW_INFO", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_build_info = function(callback) {
-  this._getter("BUILD_INFO_DEV", callback, functionname());
+  this._get("BUILD_INFO_DEV", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_option_info = function(callback) {
-  this._getter("OPTION_INFO_DEV", callback, functionname());
+  this._get("OPTION_INFO_DEV", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_mac_info = function(callback) {
-  this._getter("MAC_INFO_DEV", callback, functionname());
+  this._get("MAC_INFO_DEV", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_mem_mon_info = function(callback) {
-  this._getter("MEM_MON_DEV", callback, functionname());
+  this._get("MEM_MON_DEV", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let get_test_info = function(callback) {
-  this._getter("TEST_DEV", callback, functionname());
+  this._get("TEST_DEV", callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
-
-
-
-
-
-/*---------------------------------------------------------------------------*/
-let _setter_view_info = function(setwhat, callback, logname) {
-  log.log(`${logname}`);
+let _set_view_info = function(setwhat, callback, logname) {
+  log.log(`lgsb.js: _set_view_info running ${logname}`);
   this.sendqueue.push({
     command: {"cmd": "set", "data": setwhat, "msg": "SETTING_VIEW_INFO"},
     callback: callback});
@@ -393,8 +395,8 @@ let _setter_view_info = function(setwhat, callback, logname) {
   this._send_to_device();
 }
 /*---------------------------------------------------------------------------*/
-let _setter = function(category, setwhat, callback, logname) {
-  log.log(`${logname}`);
+let _set = function(category, setwhat, callback, logname) {
+  log.log(`lgsb.js: _set running ${logname}`);
   this.sendqueue.push({
     command: {"cmd": "set", "data": setwhat, "msg": category},
     callback: callback});
@@ -403,80 +405,93 @@ let _setter = function(category, setwhat, callback, logname) {
 }
 /*---------------------------------------------------------------------------*/
 let set_night_mode = function(enable, callback) {
-  this._setter_view_info({"b_night_time": enable}, callback, functionname());
+  this._set_view_info({"b_night_time": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_avc = function(enable, callback) {
-  this._setter_view_info({"b_auto_vol": enable}, callback, functionname());
+  this._set_view_info({"b_auto_vol": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_drc = function(enable, callback) {
-  this._setter_view_info({"b_drc": enable}, callback, functionname());
+  this._set_view_info({"b_drc": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_neuralx = function(enable, callback) {
-  this._setter_view_info({"b_neuralx": enable}, callback, functionname());
+  this._set_view_info({"b_neuralx": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_av_sync = function(value, callback) {
-  this._setter_view_info({"i_av_sync": value}, callback, functionname());
+  this._set_view_info({"i_av_sync": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_woofer_level = function(value, callback) {
-  this._setter_view_info({"i_woofer_level": value}, callback, functionname());
+  this._set_view_info({"i_woofer_level": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_rear_control = function(enable, callback) {
-  this._setter_view_info({"b_rear": enable}, callback, functionname());
+  this._set_view_info({"b_rear": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_rear_level = function(value, callback) {
-  this._setter_view_info({"i_rear_level": value}, callback, functionname());
+  this._set_view_info({"i_rear_level": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_top_level = function(value, callback) {
-  this._setter_view_info({"i_top_level": value}, callback, functionname());
+  this._set_view_info({"i_top_level": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_center_level = function(value, callback) {
-  this._setter_view_info({"i_center_level": value}, callback, functionname());
+  this._set_view_info({"i_center_level": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_tv_remote = function(enable, callback) {
-  this._setter_view_info({"b_tv_remote": enable}, callback, functionname());
+  this._set_view_info({"b_tv_remote": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_auto_power = function(enable, callback) {
-  this._setter_view_info({"b_auto_power": enable}, callback, functionname());
+  this._set_view_info({"b_auto_power": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_auto_display = function(enable, callback) {
-  this._setter_view_info({"b_auto_display": enable}, callback, functionname());
+  this._set_view_info({"b_auto_display": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_bt_standby = function(enable, callback) {
-  this._setter_view_info({"b_bt_standby": enable}, callback, functionname());
+  this._set_view_info({"b_bt_standby": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_bt_restrict = function(enable, callback) {
-  this._setter_view_info({"b_conn_bt_limit": enable}, callback, functionname());
+  this._set_view_info({"b_conn_bt_limit": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_sleep_time = function(value, callback) {
-  this._setter_view_info({"i_sleep_time": value}, callback, functionname());
+  this._set_view_info({"i_sleep_time": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_name = function(name, callback) {
-  this._setter_view_info({"s_user_name": name}, callback, functionname());
+  this._set_view_info({"s_user_name": name}, callback, functionname());
+}
+/*---------------------------------------------------------------------------*/
+let set_eq_raw = function(eq, callback) {
+  this._set("EQ_VIEW_INFO" ,{"i_curr_eq": eq}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_eq = function(eq, callback) {
-  this._setter("EQ_VIEW_INFO" ,{"i_curr_eq": eq}, callback, functionname());
+  // find the number that the soundbar may accept
+  for (let i = 0; i < equalizers.length; i++) {
+    if (eq.toLowerCase() == equalizers[i].toLowerCase()) {
+      log.info(`lgsb.js: Set equalizer to ${equalizers[i]}`);
+      this.set_eq_raw(i, callback);
+    }
+  }
+
+  // no match found
+  log.warn(`lgsb.js: no eq match found for ${eq}`);
 }
 /*---------------------------------------------------------------------------*/
 // not used directly, instead call set_input with string
 let set_input_raw = function(value, callback) {
-  this._setter("FUNC_VIEW_INFO" ,{"i_curr_func": value}, callback, functionname());
+  this._set("FUNC_VIEW_INFO" ,{"i_curr_func": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 // eg set_input("hdmi", ...). Case insensitive
@@ -485,28 +500,97 @@ let set_input_raw = function(value, callback) {
 let set_input = function(input, callback) {
 
   // find the number that the soundbar may accept
-  let inputnum = 0;
   for (let i = 0; i < inputs.length; i++) {
     if (input.toLowerCase() == inputs[i].toLowerCase()) {
-      log.warn(`Set input to ${inputs[i]}`);
+      log.info(`lgsb.js: Set input to ${inputs[i]}`);
       this.set_input_raw(i, callback);
     }
   }
 
   // no match found
-  log.warn(`no match found for ${input}`);
+  log.warn(`lgsb.js: no input match found for ${input}`);
 }
 /*---------------------------------------------------------------------------*/
 let set_volume = function(value, callback) {
-  this._setter("SPK_LIST_VIEW_INFO" ,{"i_vol": value}, callback, functionname());
+  let parsed = 0;
+  let relative_vol = false;
+  let negative = false;
+  let newvol = 0;
+
+  // volume is absolute if:
+  //    is string && string does not contain "-" or "+"
+  //    number && number > 0
+  // otherwise relative.
+  if (typeof value === "string") {
+    if (value.indexOf("+") === 0 || value.indexOf("-") === 0) {
+      // handle "+5", "-5"
+      relative_vol = true;
+      if (value.indexOf("-") === 0) {
+        negative = true;
+      }
+      parsed = parseInt(value.replace("-","").replace("+",""), 10);
+    } else {
+      // handle "5"
+      relative_vol = false;
+      parsed = parseInt(value, 10);
+    }
+
+    if (isNaN(parsed)) {
+      // not ok parsed, bail out
+      log.warn(`lgsb.js: error parsing volume as string from input, bailing. Input: ${value}`);
+      if (callback) {
+        callback(undefined);
+      }
+      return;
+    }
+
+  } else {
+    // handle integers: -5 and 5; but only relative if negative, otherwise absolute
+    parsed = value;
+    if (parsed < 0) {
+      relative_vol = true;
+      negative = true;
+      parsed = Math.abs(value);
+    }
+  }
+
+  log.debug(`lgsb.js: set vol; relative: ${relative_vol}, neg: ${negative}, number: ${parsed}`);
+  if (relative_vol) {
+    this.get_volume((nowvol) => {
+      if (negative) {
+        newvol = nowvol - parsed;
+      } else {
+        newvol = nowvol + parsed;
+      }
+      if (newvol < 0) {
+        newvol = 0;
+      }
+
+      // set volume
+      log.debug(`lgsb.js: volume set relative to ${newvol}`);
+      this.set_volume_raw(newvol, callback);
+      return;
+    });
+
+  } else {
+    // absolute volume, just take the parsed number
+    newvol = parsed;
+  }
+
+  log.debug(`lgsb.js: volume set absolute to ${newvol}`);
+  this.set_volume_raw(newvol, callback);
+}
+/*---------------------------------------------------------------------------*/
+let set_volume_raw = function(value, callback) {
+  this._set("SPK_LIST_VIEW_INFO" ,{"i_vol": value}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let set_mute = function(enable, callback) {
-  this._setter("SPK_LIST_VIEW_INFO" ,{"b_mute": enable}, callback, functionname());
+  this._set("SPK_LIST_VIEW_INFO" ,{"b_mute": enable}, callback, functionname());
 }
 /*---------------------------------------------------------------------------*/
 let factory_reset = function(callback) {
-  log.log(`Factory reset requested`);
+  log.log(`lgsb.js: Factory reset requested`);
   this.sendqueue.push({
     command: {"cmd": "set", "msg": "FACTORY_SET_REQ"},
     callback: callback});
@@ -515,12 +599,94 @@ let factory_reset = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
 let test_tone = function(callback) {
-  log.log(`Test tone requested`);
+  log.log(`lgsb.js: Test tone requested`);
   this.sendqueue.push({
     command: {"cmd": "set", "msg": "TEST_TONE_REQ"},
     callback: callback});
 
   this._send_to_device();
+}
+/*---------------------------------------------------------------------------*/
+let get_speakerinfo = function(callback) {
+  this._get("SPK_LIST_VIEW_INFO", callback, functionname());
+}
+/*---------------------------------------------------------------------------*/
+let get_volume = function(callback) {
+  this.get_speakerinfo((result) => {
+    callback(result.data.i_vol);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_mute = function(callback) {
+  this.get_speakerinfo((result) => {
+    callback(result.data.b_mute);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_nightmode = function(callback) {
+  this.get_settings((result) => {
+    callback(result.data.b_night_time);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_name = function(callback) {
+  this.get_settings((result) => {
+    callback(result.data.s_user_name);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_product = function(callback) {
+  this.get_product_info((result) => {
+    callback(result.data.s_model_name);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_input = function(callback) {
+  this.get_func((result) => {
+    let ans = "Unknown";
+    let funcnum = result.data.i_curr_func;
+    if (funcnum < inputs.length) {
+      ans = inputs[funcnum];
+    }
+    callback(ans);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_basic_info = function(callback) {
+  // no need to do this unless we're interested in the result
+  if (typeof callback != "function") {
+    return;
+  }
+
+  let returnobj = {};
+
+  // gather information
+  this.get_settings((result) => {
+    returnobj.nightmode = result.data.b_night_time;
+    returnobj.name = result.data.s_user_name;
+    returnobj.ip = result.data.s_ipv4_addr;
+
+    this.get_speakerinfo((result) => {
+      returnobj.volume = result.data.i_vol;
+      returnobj.volume_min = result.data.i_vol_min;
+      returnobj.volume_max = result.data.i_vol_max;
+      returnobj.muted = result.data.b_mute;
+
+      this.get_input((result) => {
+        returnobj.input = result;
+        callback(returnobj);
+      });
+    });
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_info = function(callback) {
+}
+/*---------------------------------------------------------------------------*/
+let set_logging = function(level) {
+  if (["silent", "error", "warn", "info", "debug", "trace"].indexOf(level) >= 0) {
+    log.setLevel(level); // silent, error, warn, info, debug, trace
+  }
 }
 /*---------------------------------------------------------------------------*/
 class lg_soundbar {
@@ -555,39 +721,135 @@ class lg_soundbar {
     this._decrypt = _decrypt.bind(this);
     this._connect_to_device = _connect_to_device.bind(this);
     this._send_to_device = _send_to_device.bind(this);
-    this._disconnect = _disconnect.bind(this);
     this._tcp_opened = _tcp_opened.bind(this);
-    this._getter = _getter.bind(this);
-    this._setter_view_info = _setter_view_info.bind(this);
-    this._setter = _setter.bind(this);
+
+    // not meant for external use since they're kind of raw
+    this._get = _get.bind(this);
+    this._set_view_info = _set_view_info.bind(this);
+    this._set = _set.bind(this);
   }
 }
 /*---------------------------------------------------------------------------*/
 exports.lg_soundbar = lg_soundbar;
 
-// external functions
-// Get
+// In the below, anything marked as (raw*) returns the raw query answer from the
+// speaker, as an object (speaker answers in JSON). This means that the info
+// you're after may be a couple of layers deep down. See the extended-docs.txt
+// for examples.
+// 
+// Functions _not_ marked as (raw*) returns either a boolean, string, or integer.
+// Eg volume -> 10, or nightmode -> false.
+
+// set logging level
+lg_soundbar.prototype.set_logging = set_logging;
+
+// close the TCP connection
+lg_soundbar.prototype._disconnect = _disconnect;
+
+// ---------------------------------------------------Gets
+// (raw*) get equalizer settings
 lg_soundbar.prototype.get_eq = get_eq;
-lg_soundbar.prototype.get_info = get_info;
+
+// (raw*) get play information (eg what's playing)
 lg_soundbar.prototype.get_play = get_play;
+
+// (raw*) get eg input
 lg_soundbar.prototype.get_func = get_func;
+
+// (raw*) get settings, eg night mode and per-channel settings
 lg_soundbar.prototype.get_settings = get_settings;
+
+// (raw*) get information on this product, eg product name
 lg_soundbar.prototype.get_product_info = get_product_info;
+
+// (raw*) get c4a status (EULA agreement?)
 lg_soundbar.prototype.get_c4a_info = get_c4a_info;
+
+// (raw*) get 
 lg_soundbar.prototype.get_radio_info = get_radio_info;
+
+// (raw*) (unknown, "not supported" on SP8YA)
 lg_soundbar.prototype.get_ap_info = get_ap_info;
+
+// (raw*) get firmware update information
 lg_soundbar.prototype.get_update_info = get_update_info;
+
+// (raw*) get system software information
 lg_soundbar.prototype.get_build_info = get_build_info;
+
+// (raw*) get product options info (region info?)
 lg_soundbar.prototype.get_option_info = get_option_info;
+
+// (raw*) get UUID and wifi/mac MAC address information
 lg_soundbar.prototype.get_mac_info = get_mac_info;
+
+// (raw*) (unknown, no answer)
 lg_soundbar.prototype.get_mem_mon_info = get_mem_mon_info;
+
+// (raw*) (unknown, no answer)
 lg_soundbar.prototype.get_test_info = get_test_info;
 
-// Set
+// (raw*) get various information, such as volume.
+lg_soundbar.prototype.get_speakerinfo = get_speakerinfo;
+
+// get the text-friendly name of the device; can be set by user, string eg "LG_Speaker_SP8YA"
+lg_soundbar.prototype.get_name = get_name;
+
+// get the device product name, string eg "SP8YA"
+lg_soundbar.prototype.get_product = get_product;
+
+// get the current input name, string eg "Bluetooth"
+lg_soundbar.prototype.get_input = get_input;
+
+// get master volume, integer eg 10
+lg_soundbar.prototype.get_volume = get_volume;
+
+// get whether this is muted. boolean eg false 
+lg_soundbar.prototype.get_mute = get_mute;
+
+// get whether night mode is active. boolean eg false 
+lg_soundbar.prototype.get_nightmode = get_nightmode;
+
+// get basic information: input, volume, etc. Returns an object.
+lg_soundbar.prototype.get_basic_info = get_basic_info;
+
+// get full information. Returns an object.
+lg_soundbar.prototype.get_info = get_info;
+
+// ---------------------------------------------------Sets
+// set master volume, integer or string, where can be absolute number, or relative
+// in which case the current volume will be fetched first.
+// eg set_volume(7)
+// eg set_volume("7")
+// eg set_volume("+2")
 lg_soundbar.prototype.set_volume = set_volume;
+
+// set master volume, integer between min and max (on SP8YA 0..40 inclusive)
+lg_soundbar.prototype.set_volume_raw = set_volume_raw;
+
+// set mute status, boolean
 lg_soundbar.prototype.set_mute = set_mute;
+
+// set night mode status, boolean
 lg_soundbar.prototype.set_night_mode = set_night_mode;
+
+// set input, string that must match inputs, but case insensitive.
+// See list of inputs above.
+// eg set_input("hdmi")
 lg_soundbar.prototype.set_input = set_input;
+
+// set input, integer. See list of inputs to match.
+// eg set_input_raw(4)
+lg_soundbar.prototype.set_input_raw = set_input_raw;
+
+// set equalizer, string that must match eqs, case insensitive.
+// See list of equalizers above.
+// eg set_eq("standard")
+lg_soundbar.prototype.set_eq = set_eq;
+
+// set equalizer, integer. See list of equalizer to match.
+// eg set_eq_raw(4)
+lg_soundbar.prototype.set_eq_raw = set_eq_raw;
 
 lg_soundbar.prototype.set_avc = set_avc;
 lg_soundbar.prototype.set_drc = set_drc;
@@ -604,72 +866,8 @@ lg_soundbar.prototype.set_auto_display = set_auto_display;
 lg_soundbar.prototype.set_bt_standby = set_bt_standby;
 lg_soundbar.prototype.set_bt_restrict = set_bt_restrict;
 lg_soundbar.prototype.set_sleep_time = set_sleep_time;
-lg_soundbar.prototype.set_eq = set_eq;
-lg_soundbar.prototype.set_input_raw = set_input_raw;
 lg_soundbar.prototype.factory_reset = factory_reset;
 lg_soundbar.prototype.test_tone = test_tone;
-/*---------------------------------------------------------------------------*/
-let get_speakerinfo = function(callback) {
-  this._getter("SPK_LIST_VIEW_INFO", callback, functionname());
-}
-/*---------------------------------------------------------------------------*/
-let get_volume = function(callback) {
-  this.get_speakerinfo((result) => {
-    callback(result.data.i_vol);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_mute = function(callback) {
-  this.get_speakerinfo((result) => {
-    callback(result.data.b_mute);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_nightmode = function(callback) {
-  this.get_info((result) => {
-    callback(result.data.b_night_time);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_name = function(callback) {
-  this.get_info((result) => {
-    callback(result.data.s_user_name);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_product = function(callback) {
-  this.get_product_info((result) => {
-    callback(result.data.s_model_name);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_input = function(callback) {
-  this.get_func((result) => {
-    let ans = "Unknown";
-    let funcnum = result.data.i_curr_func;
-    if (funcnum < inputs.length) {
-      ans = inputs[funcnum];
-    }
-    callback(ans);
-  });
-}
-/*---------------------------------------------------------------------------*/
-// wrappers and new
-lg_soundbar.prototype.get_name = get_name;
-lg_soundbar.prototype.get_product = get_product;
-lg_soundbar.prototype.get_input = get_input;
-lg_soundbar.prototype.get_speakerinfo = get_speakerinfo;
-lg_soundbar.prototype.get_volume = get_volume;
-lg_soundbar.prototype.get_mute = get_mute;
-lg_soundbar.prototype.get_nightmode = get_nightmode;
-/*---------------------------------------------------------------------------*/
-let set_logging = function(level) {
-  if (["silent", "error", "warn", "info", "debug", "trace"].indexOf(level) >= 0) {
-    log.setLevel(level); // silent, error, warn, info, debug, trace
-  }
-}
-
-lg_soundbar.prototype.set_logging = set_logging; // set logging level
 /*---------------------------------------------------------------------------*/
 if (running_as_script) {
   // if called directly from commandline, we run a small example/test
