@@ -530,6 +530,88 @@ let test_tone = function(callback) {
   this._send_to_device();
 }
 /*---------------------------------------------------------------------------*/
+let get_speakerinfo = function(callback) {
+  this._get("SPK_LIST_VIEW_INFO", callback, functionname());
+}
+/*---------------------------------------------------------------------------*/
+let get_volume = function(callback) {
+  this.get_speakerinfo((result) => {
+    callback(result.data.i_vol);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_mute = function(callback) {
+  this.get_speakerinfo((result) => {
+    callback(result.data.b_mute);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_nightmode = function(callback) {
+  this.get_settings((result) => {
+    callback(result.data.b_night_time);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_name = function(callback) {
+  this.get_settings((result) => {
+    callback(result.data.s_user_name);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_product = function(callback) {
+  this.get_product_info((result) => {
+    callback(result.data.s_model_name);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_input = function(callback) {
+  this.get_func((result) => {
+    let ans = "Unknown";
+    let funcnum = result.data.i_curr_func;
+    if (funcnum < inputs.length) {
+      ans = inputs[funcnum];
+    }
+    callback(ans);
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_basic_info = function(callback) {
+  // no need to do this unless we're interested in the result
+  if (typeof callback != "function") {
+    return;
+  }
+
+  let returnobj = {};
+
+  // gather information
+  this.get_settings((result) => {
+    returnobj.nightmode = result.data.b_night_time;
+    returnobj.name = result.data.s_user_name;
+    returnobj.ip = result.data.s_ipv4_addr;
+
+    this.get_speakerinfo((result) => {
+      returnobj.volume = result.data.i_vol;
+      returnobj.volume_min = result.data.i_vol_min;
+      returnobj.volume_max = result.data.i_vol_max;
+      returnobj.muted = result.data.b_mute;
+
+      this.get_input((result) => {
+        returnobj.input = result;
+        callback(returnobj);
+      });
+    });
+  });
+}
+/*---------------------------------------------------------------------------*/
+let get_info = function(callback) {
+}
+/*---------------------------------------------------------------------------*/
+let set_logging = function(level) {
+  if (["silent", "error", "warn", "info", "debug", "trace"].indexOf(level) >= 0) {
+    log.setLevel(level); // silent, error, warn, info, debug, trace
+  }
+}
+/*---------------------------------------------------------------------------*/
 class lg_soundbar {
   constructor(ip) {
     // -------------------------------
@@ -581,6 +663,9 @@ exports.lg_soundbar = lg_soundbar;
 // 
 // Functions _not_ marked as (raw*) returns either a boolean, string, or integer.
 // Eg volume -> 10, or nightmode -> false.
+
+// set logging level
+lg_soundbar.prototype.set_logging = set_logging;
 
 // ---------------------------------------------------Gets
 // (raw*) get equalizer settings
@@ -697,90 +782,6 @@ lg_soundbar.prototype.set_bt_restrict = set_bt_restrict;
 lg_soundbar.prototype.set_sleep_time = set_sleep_time;
 lg_soundbar.prototype.factory_reset = factory_reset;
 lg_soundbar.prototype.test_tone = test_tone;
-/*---------------------------------------------------------------------------*/
-let get_speakerinfo = function(callback) {
-  this._get("SPK_LIST_VIEW_INFO", callback, functionname());
-}
-/*---------------------------------------------------------------------------*/
-let get_volume = function(callback) {
-  this.get_speakerinfo((result) => {
-    callback(result.data.i_vol);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_mute = function(callback) {
-  this.get_speakerinfo((result) => {
-    callback(result.data.b_mute);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_nightmode = function(callback) {
-  this.get_settings((result) => {
-    callback(result.data.b_night_time);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_name = function(callback) {
-  this.get_settings((result) => {
-    callback(result.data.s_user_name);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_product = function(callback) {
-  this.get_product_info((result) => {
-    callback(result.data.s_model_name);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_input = function(callback) {
-  this.get_func((result) => {
-    let ans = "Unknown";
-    let funcnum = result.data.i_curr_func;
-    if (funcnum < inputs.length) {
-      ans = inputs[funcnum];
-    }
-    callback(ans);
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_basic_info = function(callback) {
-  // no need to do this unless we're interested in the result
-  if (typeof callback != "function") {
-    return;
-  }
-
-  let returnobj = {};
-
-  // gather information
-  this.get_settings((result) => {
-    returnobj.nightmode = result.data.b_night_time;
-    returnobj.name = result.data.s_user_name;
-    returnobj.ip = result.data.s_ipv4_addr;
-
-    this.get_speakerinfo((result) => {
-      returnobj.volume = result.data.i_vol;
-      returnobj.volume_min = result.data.i_vol_min;
-      returnobj.volume_max = result.data.i_vol_max;
-      returnobj.muted = result.data.b_mute;
-
-      this.get_input((result) => {
-        returnobj.input = result;
-        callback(returnobj);
-      });
-    });
-  });
-}
-/*---------------------------------------------------------------------------*/
-let get_info = function(callback) {
-}
-/*---------------------------------------------------------------------------*/
-let set_logging = function(level) {
-  if (["silent", "error", "warn", "info", "debug", "trace"].indexOf(level) >= 0) {
-    log.setLevel(level); // silent, error, warn, info, debug, trace
-  }
-}
-
-lg_soundbar.prototype.set_logging = set_logging; // set logging level
 /*---------------------------------------------------------------------------*/
 if (running_as_script) {
   // if called directly from commandline, we run a small example/test
