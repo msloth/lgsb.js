@@ -283,8 +283,11 @@ let _tcp_data = function(data) {
   //            "Get"s aren't necessarily accurate (if written during same conn)
   // Disconnect - reconnect timer adds latency
   //              "Get"s are always accurate
-  this._send_to_device(); // keep on
-  // this._disconnect(); // disconnect
+  if (this.always_disconnect) {
+    this._disconnect(); // disconnect
+  } else {
+    this._send_to_device(); // keep on
+  }
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_closed = function() {
