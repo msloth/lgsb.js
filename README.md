@@ -35,7 +35,6 @@ let lgsb = new lg_soundbar("192.168.1.135");
 
 // all these are valid uses with a relative volume level:
 lgsb.set_volume("+6", (ret) => {});
-lgsb.set_volume("6", (ret) => {});
 lgsb.set_volume("-2", (ret) => {});
 lgsb.set_volume(-4, (ret) => {});
 
