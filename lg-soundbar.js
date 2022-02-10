@@ -657,18 +657,35 @@ let get_input = function(callback) {
 let get_basic_info = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
-let get_info = function(callback) {
+let get_full_info = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
+// get the text-friendly name of the device; can be set by user, eg "LG_Speaker_SP8YA"
 lg_soundbar.prototype.get_name = get_name;
+
+// get the device product name, eg "SP8YA"
 lg_soundbar.prototype.get_product = get_product;
+
+// get the current input name, eg "Bluetooth"
 lg_soundbar.prototype.get_input = get_input;
+
+// 
 lg_soundbar.prototype.get_speakerinfo = get_speakerinfo;
+
+// get master volume, eg 10
 lg_soundbar.prototype.get_volume = get_volume;
+
+// get whether this is muted, boolean. Eg false 
 lg_soundbar.prototype.get_mute = get_mute;
+
+// get whether night mode is active, boolean. Eg false 
 lg_soundbar.prototype.get_nightmode = get_nightmode;
+
+// get basic information: input, volume, etc
 lg_soundbar.prototype.get_basic_info = get_basic_info;
-lg_soundbar.prototype.get_info = get_info;
+
+// get full informations
+lg_soundbar.prototype.get_full_info = get_full_info;
 /*---------------------------------------------------------------------------*/
 let set_logging = function(level) {
   if (["silent", "error", "warn", "info", "debug", "trace"].indexOf(level) >= 0) {
