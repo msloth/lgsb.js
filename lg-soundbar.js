@@ -553,7 +553,7 @@ let set_volume = function(value, callback) {
 
   log.debug(`lgsb.js: set vol; relative: ${relative_vol}, neg: ${negative}, number: ${parsed}`);
   if (relative_vol) {
-    get_vol((nowvol) => {
+    this.get_volume((nowvol) => {
       if (negative) {
         newvol = nowvol - parsed;
       } else {
