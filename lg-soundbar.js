@@ -192,6 +192,9 @@ let _send_to_device = function() {
     this.tcpclient.write(payload);
 
     // restart timer
+    if (this.auto_disconnect_timer) {
+      clearTimeout(this.auto_disconnect_timer);
+    }
     this.auto_disconnect_timer = 
       setTimeout(this._disconnect.bind(this), this.auto_disconnect_timeout);
 
