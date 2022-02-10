@@ -721,7 +721,6 @@ class lg_soundbar {
     this._decrypt = _decrypt.bind(this);
     this._connect_to_device = _connect_to_device.bind(this);
     this._send_to_device = _send_to_device.bind(this);
-    this._disconnect = _disconnect.bind(this);
     this._tcp_opened = _tcp_opened.bind(this);
 
     // not meant for external use since they're kind of raw
@@ -743,6 +742,9 @@ exports.lg_soundbar = lg_soundbar;
 
 // set logging level
 lg_soundbar.prototype.set_logging = set_logging;
+
+// close the TCP connection
+lg_soundbar.prototype._disconnect = _disconnect;
 
 // ---------------------------------------------------Gets
 // (raw*) get equalizer settings
