@@ -124,7 +124,7 @@ let _decrypt = function(data) {
     decrypted = decrypted.toString('utf8');
     return decrypted;
   } catch(error) {
-    log.error(`failed decrypting: ${data}`);
+    log.error(`lgsb.js: failed decrypting: ${data}`);
     log.error(error);
     return undefined;
   }
@@ -163,19 +163,19 @@ let _create_packet = function(data) {
 let _send_to_device = function() {
   // sanity check: are we even needed?
   if (this.sendqueue.length === 0) {
-    log.log(`send, but queue at 0 so returning; letting live auto for a few seconds`);
+    log.log(`lgsb.js: send, but queue at 0 so returning; letting live auto for a few seconds`);
     return;
   }
 
   // sanity check: are we currently waiting for an connect/answer?
   if (this.current_send) {
-    log.log(`send, but already current, ie waiting for answer`);
+    log.log(`lgsb.js: send, but already current, ie waiting for answer`);
     return;
   }
 
-  log.log(`Sending... Queue at ${this.sendqueue.length}`);
+  log.log(`lgsb.js: Sending... Queue at ${this.sendqueue.length}`);
   if (!this.is_connected) {
-    log.warn(`Send, but not connected yet.`);
+    log.warn(`lgsb.js: Send, but not connected yet.`);
     this._connect_to_device();
 
   } else {
@@ -186,7 +186,8 @@ let _send_to_device = function() {
     }
 
     // send over network
-    log.log(this.current_send.command);
+    log.trace(`lgsb.js: current command: `);
+    log.trace(this.current_send.command);
     let payload = this._create_packet(this.current_send.command);
     this.tcpclient.write(payload);
 
@@ -204,7 +205,7 @@ let _send_to_device = function() {
 /*---------------------------------------------------------------------------*/
 // Terminate the TCP connection, mostly from a timer if the connection is idle
 let _disconnect = function() {
-  log.log(`Closing connection`);
+  log.log(`lgsb.js: Closing connection`);
 
   // stop timer if running
   if (this.auto_disconnect_timer) {
@@ -217,16 +218,16 @@ let _disconnect = function() {
 /*---------------------------------------------------------------------------*/
 let _connect_to_device = function() {
   if (this.is_connected) {
-    log.log(`Connect, but already connected`);
+    log.log(`lgsb.js: Connect, but already connected`);
     return;
   }
 
-  log.log(`Connecting... Queue at ${this.sendqueue.length}`);
+  log.log(`lgsb.js: Connecting... Queue at ${this.sendqueue.length}`);
   this.tcpclient.connect(this.tcpport, this.ipaddr, _tcp_opened.bind(this));
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_opened = function() {
-  log.log(`TCP Connected... Queue at ${this.sendqueue.length}`);
+  log.log(`lgsb.js: TCP Connected... Queue at ${this.sendqueue.length}`);
   this.is_connected = true;
   this.auto_disconnect_timer = 
       setTimeout(this._disconnect.bind(this), this.auto_disconnect_timeout);
@@ -236,7 +237,7 @@ let _tcp_opened = function() {
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_error = function() {
-  log.log(`TCP error... Queue at ${this.sendqueue.length}`);
+  log.log(`lgsb.js: TCP error... Queue at ${this.sendqueue.length}`);
   this.is_connected = false;
 
   // start/keep sending
@@ -247,7 +248,7 @@ let _tcp_error = function() {
 // Note: needs hardening
 let _tcp_data = function(data) {
   if (data[0] != 0x10) {
-    log.warn(`warning: header magic not ok`);
+    log.warn(`lgsb.js: warning: rx header magic not ok`);
   }
 
   let rxed = _decrypt(data.slice(5));
@@ -255,14 +256,14 @@ let _tcp_data = function(data) {
     try {
       rxed = JSON.parse(rxed);
     } catch(error) {
-      log.error(`failed parsing received as JSON: ${rxed}`);
+      log.error(`lgsb.js: failed parsing received as JSON: ${rxed}`);
       rxed = undefined;
     }
   }
 
   if (this.current_send) {
     // note: if we failed decrypt or parse, answer is undefined
-    log.log(`current send exists`);
+    log.log(`lgsb.js: current send exists`);
     if (this.current_send.callback) {
       this.current_send.callback(rxed);
     }
@@ -284,7 +285,7 @@ let _tcp_data = function(data) {
 }
 /*---------------------------------------------------------------------------*/
 let _tcp_closed = function() {
-  log.log('TCP Connection closed');
+  log.log('lgsb.js: TCP Connection closed');
   this.is_connected = false;
 
   // stop timer if running; if anything restarts the connection, the timer will
@@ -296,7 +297,7 @@ let _tcp_closed = function() {
 
   // if we should reconnect, set that up
   if (this.sendqueue.length > 0) {
-    log.warn(`TCP closed but queue > 0, setting reconnect timer`);
+    log.warn(`lgsb.js: TCP closed but queue > 0, setting reconnect timer`);
     this.reconnect_timer = setTimeout(this._connect_to_device, 1000);
   }
 }
@@ -380,7 +381,7 @@ let get_test_info = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
 let _set_view_info = function(setwhat, callback, logname) {
-  log.log(`${logname}`);
+  log.log(`lgsb.js: _set_view_info running ${logname}`);
   this.sendqueue.push({
     command: {"cmd": "set", "data": setwhat, "msg": "SETTING_VIEW_INFO"},
     callback: callback});
@@ -389,7 +390,7 @@ let _set_view_info = function(setwhat, callback, logname) {
 }
 /*---------------------------------------------------------------------------*/
 let _set = function(category, setwhat, callback, logname) {
-  log.log(`${logname}`);
+  log.log(`lgsb.js: _set running ${logname}`);
   this.sendqueue.push({
     command: {"cmd": "set", "data": setwhat, "msg": category},
     callback: callback});
@@ -473,13 +474,13 @@ let set_eq = function(eq, callback) {
   // find the number that the soundbar may accept
   for (let i = 0; i < equalizers.length; i++) {
     if (eq.toLowerCase() == equalizers[i].toLowerCase()) {
-      log.info(`Set equalizer to ${equalizers[i]}`);
+      log.info(`lgsb.js: Set equalizer to ${equalizers[i]}`);
       this.set_eq_raw(i, callback);
     }
   }
 
   // no match found
-  log.warn(`no eq match found for ${eq}`);
+  log.warn(`lgsb.js: no eq match found for ${eq}`);
 }
 /*---------------------------------------------------------------------------*/
 // not used directly, instead call set_input with string
@@ -495,13 +496,13 @@ let set_input = function(input, callback) {
   // find the number that the soundbar may accept
   for (let i = 0; i < inputs.length; i++) {
     if (input.toLowerCase() == inputs[i].toLowerCase()) {
-      log.info(`Set input to ${inputs[i]}`);
+      log.info(`lgsb.js: Set input to ${inputs[i]}`);
       this.set_input_raw(i, callback);
     }
   }
 
   // no match found
-  log.warn(`no input match found for ${input}`);
+  log.warn(`lgsb.js: no input match found for ${input}`);
 }
 /*---------------------------------------------------------------------------*/
 let set_volume = function(value, callback) {
@@ -583,7 +584,7 @@ let set_mute = function(enable, callback) {
 }
 /*---------------------------------------------------------------------------*/
 let factory_reset = function(callback) {
-  log.log(`Factory reset requested`);
+  log.log(`lgsb.js: Factory reset requested`);
   this.sendqueue.push({
     command: {"cmd": "set", "msg": "FACTORY_SET_REQ"},
     callback: callback});
@@ -592,7 +593,7 @@ let factory_reset = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
 let test_tone = function(callback) {
-  log.log(`Test tone requested`);
+  log.log(`lgsb.js: Test tone requested`);
   this.sendqueue.push({
     command: {"cmd": "set", "msg": "TEST_TONE_REQ"},
     callback: callback});
