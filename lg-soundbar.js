@@ -650,6 +650,31 @@ let get_input = function(callback) {
 }
 /*---------------------------------------------------------------------------*/
 let get_basic_info = function(callback) {
+  // no need to do this unless we're interested in the result
+  if (typeof callback != "function") {
+    return;
+  }
+
+  let returnobj = {};
+
+  // gather information
+  this.get_settings((result) => {
+    returnobj.nightmode = result.data.b_night_time;
+    returnobj.name = result.data.s_user_name;
+    returnobj.ip = result.data.s_ipv4_addr;
+
+    this.get_speakerinfo((result) => {
+      returnobj.volume = result.data.i_vol;
+      returnobj.volume_min = result.data.i_vol_min;
+      returnobj.volume_max = result.data.i_vol_max;
+      returnobj.muted = result.data.b_mute;
+
+      this.get_input((result) => {
+        returnobj.input = result;
+        callback(returnobj);
+      });
+    });
+  });
 }
 /*---------------------------------------------------------------------------*/
 let get_info = function(callback) {
@@ -679,7 +704,7 @@ lg_soundbar.prototype.get_nightmode = get_nightmode;
 // get basic information: input, volume, etc
 lg_soundbar.prototype.get_basic_info = get_basic_info;
 
-// get full informations
+// get full information
 lg_soundbar.prototype.get_info = get_info;
 /*---------------------------------------------------------------------------*/
 let set_logging = function(level) {
