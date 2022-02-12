@@ -175,10 +175,11 @@ let _send_to_device = function() {
 
   log.log(`lgsb.js: Sending... Queue at ${this.sendqueue.length}`);
   if (!this.is_connected) {
-    log.warn(`lgsb.js: Send, but not connected yet.`);
+    log.warn(`lgsb.js: Send, but not connected yet. Connecting.`);
     this._connect_to_device();
 
   } else {
+    log.warn(`lgsb.js: Send, and connected. Creating packet and sending.`);
     if (!this.current_send) {
       // pick next send from the queue, when we recieve an answer, we will
       // invoke the corresponding callback and clear this.current_send
@@ -197,7 +198,6 @@ let _send_to_device = function() {
     }
     this.auto_disconnect_timer = 
       setTimeout(this._disconnect.bind(this), this.auto_disconnect_timeout);
-
   }
 }
 /*---------------------------------------------------------------------------*/
