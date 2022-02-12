@@ -578,16 +578,14 @@ let set_volume = function(value, callback) {
       // set volume
       log.debug(`lgsb.js: volume set relative to ${newvol}`);
       this.set_volume_raw(newvol, callback);
-      return;
     });
 
   } else {
     // absolute volume, just take the parsed number
     newvol = parsed;
+    log.debug(`lgsb.js: volume set absolute to ${newvol}`);
+    this.set_volume_raw(newvol, callback);
   }
-
-  log.debug(`lgsb.js: volume set absolute to ${newvol}`);
-  this.set_volume_raw(newvol, callback);
 }
 /*---------------------------------------------------------------------------*/
 let set_volume_raw = function(value, callback) {
