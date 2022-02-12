@@ -881,14 +881,8 @@ if (running_as_script) {
   // ie not "require"d
   let lgsb = new lg_soundbar("192.168.1.135");
 
-  lgsb.get_nightmode((enabled) => {
-    console.log(`Night mode enabled? ${enabled}`);
-    if (enabled) {
-      const new_vol = 11;
-      console.log(`Setting volume to ${new_vol}`);
-      lgsb.set_volume(new_vol, () => {
-      });
-    }
+  lgsb.get_basic_info((ret) => {
+    console.log(JSON.stringify(ret));
   });
 }
 /*---------------------------------------------------------------------------*/
