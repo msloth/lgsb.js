@@ -220,6 +220,11 @@ let _disconnect = function() {
 }
 /*---------------------------------------------------------------------------*/
 let _connect_to_device = function() {
+  if (this.tcpclient && this.tcpclient.readyState === "opening") {
+    log.log(`lgsb.js: Connect, but already trying to connect`);
+    return;
+  }
+
   if (this.is_connected) {
     log.log(`lgsb.js: Connect, but already connected`);
     return;
