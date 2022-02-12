@@ -304,6 +304,12 @@ let _tcp_closed = function() {
     this.auto_disconnect_timer = undefined;
   }
 
+  if (this.current_send) {
+    // closed, eg by TCP error or remote end closing. Reconnect and try again
+    log.warn(`lgsb.js: TCP closed got current send. Storing that and setting reconnect.`);
+    this.sendqueue.unshift(this.current_send);
+  }
+
   // if we should reconnect, set that up
   if (this.sendqueue.length > 0) {
     log.warn(`lgsb.js: TCP closed but queue > 0, setting reconnect timer`);
