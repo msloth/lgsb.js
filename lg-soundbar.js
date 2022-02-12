@@ -244,8 +244,9 @@ let _tcp_opened = function() {
   this._send_to_device();
 }
 /*---------------------------------------------------------------------------*/
-let _tcp_error = function() {
-  log.log(`lgsb.js: TCP error... Queue at ${this.sendqueue.length}`);
+let _tcp_error = function(error) {
+  log.error(`lgsb.js: TCP error... Queue at ${this.sendqueue.length}`);
+  log.error(error);
   this.is_connected = false;
 
   // start/keep sending
