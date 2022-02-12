@@ -248,9 +248,6 @@ let _tcp_error = function(error) {
   log.error(`lgsb.js: TCP error... Queue at ${this.sendqueue.length}`);
   log.error(error);
   this.is_connected = false;
-
-  // start/keep sending
-  this._send_to_device();
 }
 /*---------------------------------------------------------------------------*/
 // Data received from the Soundbar
