@@ -175,10 +175,11 @@ let _send_to_device = function() {
 
   log.log(`lgsb.js: Sending... Queue at ${this.sendqueue.length}`);
   if (!this.is_connected) {
-    log.warn(`lgsb.js: Send, but not connected yet.`);
+    log.warn(`lgsb.js: Send, but not connected yet. Connecting.`);
     this._connect_to_device();
 
   } else {
+    log.warn(`lgsb.js: Send, and connected. Creating packet and sending.`);
     if (!this.current_send) {
       // pick next send from the queue, when we recieve an answer, we will
       // invoke the corresponding callback and clear this.current_send
@@ -197,7 +198,6 @@ let _send_to_device = function() {
     }
     this.auto_disconnect_timer = 
       setTimeout(this._disconnect.bind(this), this.auto_disconnect_timeout);
-
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -220,6 +220,11 @@ let _disconnect = function() {
 }
 /*---------------------------------------------------------------------------*/
 let _connect_to_device = function() {
+  if (this.tcpclient && this.tcpclient.readyState === "opening") {
+    log.log(`lgsb.js: Connect, but already trying to connect`);
+    return;
+  }
+
   if (this.is_connected) {
     log.log(`lgsb.js: Connect, but already connected`);
     return;
@@ -239,12 +244,10 @@ let _tcp_opened = function() {
   this._send_to_device();
 }
 /*---------------------------------------------------------------------------*/
-let _tcp_error = function() {
-  log.log(`lgsb.js: TCP error... Queue at ${this.sendqueue.length}`);
+let _tcp_error = function(error) {
+  log.error(`lgsb.js: TCP error... Queue at ${this.sendqueue.length}`);
+  log.error(error);
   this.is_connected = false;
-
-  // start/keep sending
-  this._send_to_device();
 }
 /*---------------------------------------------------------------------------*/
 // Data received from the Soundbar
@@ -299,6 +302,12 @@ let _tcp_closed = function() {
   if (this.auto_disconnect_timer) {
     clearTimeout(this.auto_disconnect_timer);
     this.auto_disconnect_timer = undefined;
+  }
+
+  if (this.current_send) {
+    // closed, eg by TCP error or remote end closing. Reconnect and try again
+    log.warn(`lgsb.js: TCP closed got current send. Storing that and setting reconnect.`);
+    this.sendqueue.unshift(this.current_send);
   }
 
   // if we should reconnect, set that up
@@ -569,16 +578,14 @@ let set_volume = function(value, callback) {
       // set volume
       log.debug(`lgsb.js: volume set relative to ${newvol}`);
       this.set_volume_raw(newvol, callback);
-      return;
     });
 
   } else {
     // absolute volume, just take the parsed number
     newvol = parsed;
+    log.debug(`lgsb.js: volume set absolute to ${newvol}`);
+    this.set_volume_raw(newvol, callback);
   }
-
-  log.debug(`lgsb.js: volume set absolute to ${newvol}`);
-  this.set_volume_raw(newvol, callback);
 }
 /*---------------------------------------------------------------------------*/
 let set_volume_raw = function(value, callback) {
@@ -874,14 +881,8 @@ if (running_as_script) {
   // ie not "require"d
   let lgsb = new lg_soundbar("192.168.1.135");
 
-  lgsb.get_nightmode((enabled) => {
-    console.log(`Night mode enabled? ${enabled}`);
-    if (enabled) {
-      const new_vol = 11;
-      console.log(`Setting volume to ${new_vol}`);
-      lgsb.set_volume(new_vol, () => {
-      });
-    }
+  lgsb.get_basic_info((ret) => {
+    console.log(JSON.stringify(ret));
   });
 }
 /*---------------------------------------------------------------------------*/

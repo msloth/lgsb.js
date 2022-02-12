@@ -1,5 +1,10 @@
 # changelog
 
+## v1.2.1
+
+* Bugfix to volume-setting
+* Handle TCP better, and bugfixes that resolves some race conditions
+
 ## v1.2.0
 
 * New features: get information and get basic information.
